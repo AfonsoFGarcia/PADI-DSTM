@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PADI_DSTM_Common_Types
+namespace PADI_DSTM_Library
 {
-    class Class1
+    public class Class1
     {
     }
 }

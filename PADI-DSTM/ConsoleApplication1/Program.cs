@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PADI_DSTM_Common_Types
+namespace PADI_DSTM_Master_Server
 {
-    class Class1
+    class Program
     {
+        static void Main(string[] args)
+        {
+        }
     }
 }
