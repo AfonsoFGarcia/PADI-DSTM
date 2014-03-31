@@ -9,6 +9,8 @@ namespace PADI_DSTM
 {
     public class PADILib : iPADILib
     {
+        iMaster master;
+
         bool Init()
         {
             return true;
@@ -51,11 +53,20 @@ namespace PADI_DSTM
 
         PadInt CreatePadInt (int uid)
         {
-            return new PadInt(uid);
+            PadInt p = new PadInt(uid);
+            String[] URLs = master.RegisterPadInt(uid);
+            
+            // Espetar com o gajo nos servers
+
+            return p;
         }
 
         PadInt AccessPadInt (int uid)
         {
+            String[] URLs = master.GetServerURL(uid);
+
+            // Ir buscar o gajo
+
             return new PadInt(uid);
         }
     }
