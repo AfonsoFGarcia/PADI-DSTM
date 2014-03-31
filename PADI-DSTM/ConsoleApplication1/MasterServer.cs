@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PADI_DSTM_Data_Server
+// PADI-DSTM Master Server
+namespace PADI_DSTM
 {
     class Program
     {

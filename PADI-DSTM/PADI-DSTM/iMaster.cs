@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PADI_DSTM_Library
+namespace PADI_DSTM
 {
-    public class Class1
+    interface iMaster
     {
     }
 }

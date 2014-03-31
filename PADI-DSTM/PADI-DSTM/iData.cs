@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PADI_DSTM_Common_Types
+namespace PADI_DSTM
 {
-    class Class1
+    interface iData
     {
+        bool Fail();
+        bool Freeze();
+        bool Recover();
     }
 }
