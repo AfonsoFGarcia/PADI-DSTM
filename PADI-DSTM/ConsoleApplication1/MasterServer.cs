@@ -103,6 +103,19 @@ namespace PADI_DSTM
             if (servers == null) return -1;
             return nextPadInt++;
         }
+
+        public bool Status()
+        {
+            ServerList p = servers;
+            do
+            {
+                iData d = (iData)Activator.GetObject(typeof(iData), p.URL);
+                if(d == null || !d.Status()) return false;
+                p = p.next;
+            } while (p.id != lastServer.id);
+
+            return true;
+        }
     }
 
     public class ServerList

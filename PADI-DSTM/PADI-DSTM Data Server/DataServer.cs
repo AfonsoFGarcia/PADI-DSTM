@@ -95,5 +95,12 @@ namespace PADI_DSTM
         {
             return (PadInt) objects[id];
         }
+
+        public bool Status()
+        {
+            System.Console.WriteLine("Failed: " + fail);
+            System.Console.WriteLine("Freeze: " + freeze);
+            return true;
+        }
     }
 }

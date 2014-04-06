@@ -13,5 +13,6 @@ namespace PADI_DSTM
         bool Recover();
         bool CreateObject(PadInt p);
         PadInt GetObject(int id);
+        bool Status();
     }
 }

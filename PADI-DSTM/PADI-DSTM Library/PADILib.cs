@@ -40,7 +40,7 @@ namespace PADI_DSTM
 
         public bool Status()
         {
-            return true;
+            return master.Status();
         }
 
         public bool Fail(string URL)

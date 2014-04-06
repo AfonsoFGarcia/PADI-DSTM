@@ -12,5 +12,6 @@ namespace PADI_DSTM
         String[] GetServerURL(int padIntID);
         String[] RegisterPadInt(int padIntID);
         int GetPadIntID();
+        bool Status();
     }
 }
