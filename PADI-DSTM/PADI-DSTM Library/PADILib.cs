@@ -45,17 +45,20 @@ namespace PADI_DSTM
 
         public bool Fail(string URL)
         {
-            return true;
+            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            return !(d == null || !d.Fail());
         }
 
         public bool Freeze(string URL)
         {
-            return true;
+            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            return !(d == null || !d.Freeze());
         }
 
         public bool Recover(string URL)
         {
-            return true;
+            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            return !(d == null || !d.Recover());
         }
 
         public PadInt CreatePadInt(int uid)
