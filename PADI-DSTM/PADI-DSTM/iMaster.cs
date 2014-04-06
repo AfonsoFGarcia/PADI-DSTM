@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace PADI_DSTM
 {
-    interface iMaster
+    public interface iMaster
     {
-        bool RegisterServer(String URL);
+        int RegisterServer(String URL);
         String[] GetServerURL(int padIntID);
         String[] RegisterPadInt(int padIntID);
         int GetPadIntID();

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PADI_DSTM
 {
-    interface iData
+    public interface iData
     {
         bool Fail();
         bool Freeze();
