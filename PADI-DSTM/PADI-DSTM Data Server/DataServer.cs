@@ -57,6 +57,7 @@ namespace PADI_DSTM
     public class Data : MarshalByRefObject, iData {
         bool freeze = false;
         bool fail = false;
+        Hashtable objects = new Hashtable();
 
         public bool Fail()
         {
@@ -75,6 +76,24 @@ namespace PADI_DSTM
             freeze = false;
             fail = false;
             return !(fail || freeze);
+        }
+
+        public bool CreateObject(PadInt p)
+        {
+            if (objects.ContainsKey(p.GetId()))
+            {
+                return false;
+            }
+            else
+            {
+                objects.Add(p.GetId(), p);
+                return true;
+            }
+        }
+
+        public PadInt GetObject(int id)
+        {
+            return (PadInt) objects[id];
         }
     }
 }

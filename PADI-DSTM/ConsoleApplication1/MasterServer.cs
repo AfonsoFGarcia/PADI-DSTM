@@ -79,13 +79,13 @@ namespace PADI_DSTM
 
         public String[] RegisterPadInt(int padIntID)
         {
-            int serverNum = padIntID.GetHashCode() % numServers;
+            int serverNum = padIntID.GetHashCode() % numServers + 1;
             ServerList server = GetServer(serverNum);
             String[] URLs = new String[2];
             URLs[0] = server.URL;
             URLs[1] = server.next.URL;
             padInts.Add(padIntID, URLs);
-            return new String[2];
+            return URLs;
         }
 
         public ServerList GetServer(int serverNum)

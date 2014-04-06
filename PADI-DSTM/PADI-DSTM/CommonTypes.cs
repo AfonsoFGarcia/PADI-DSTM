@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 // PADI-DSTM Common Types
 namespace PADI_DSTM
 {
+    [Serializable]
     public class PadInt
     {
         int id;
@@ -25,6 +26,11 @@ namespace PADI_DSTM
         public void Write(int v)
         {
             value = v;
+        }
+
+        public int GetId()
+        {
+            return id;
         }
     }
 }

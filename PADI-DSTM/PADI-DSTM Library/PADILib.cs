@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Channels;
 
 // PADI-DSTM Common Types
 namespace PADI_DSTM
@@ -11,63 +13,124 @@ namespace PADI_DSTM
     {
         iMaster master;
 
-        bool Init()
+        public bool Init()
+        {
+            TcpChannel channel = new TcpChannel();
+            ChannelServices.RegisterChannel(channel, true);
+
+            master = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
+            System.Console.WriteLine("Initialized Lib");
+            return master != null;
+        }
+
+        public bool TxBegin()
         {
             return true;
         }
 
-        bool TxBegin()
+        public bool TxCommit()
         {
             return true;
         }
 
-        bool TxCommit()
+        public bool TxAbort()
         {
             return true;
         }
 
-        bool TxAbort()
+        public bool Status()
         {
             return true;
         }
 
-        bool Status()
+        public bool Fail(string URL)
         {
             return true;
         }
 
-        bool Fail(string URL)
+        public bool Freeze(string URL)
         {
             return true;
         }
 
-        bool Freeze(string URL)
+        public bool Recover(string URL)
         {
             return true;
         }
 
-        bool Recover(string URL)
-        {
-            return true;
-        }
-
-        PadInt CreatePadInt (int uid)
+        public PadInt CreatePadInt(int uid)
         {
             PadInt p = new PadInt(uid);
             String[] URLs = master.RegisterPadInt(uid);
+
+            iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
             
-            // Espetar com o gajo nos servers
+            if (d1 == null) {
+                System.Console.WriteLine("Could not locate server");
+                return null;
+            }
+
+            if (!d1.CreateObject(p))
+            {
+                System.Console.WriteLine("Object already exists.");
+                return null;
+            }
+
+            if (URLs[0] != URLs[1])
+            {
+                iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
+                if (d2 == null)
+                {
+                    System.Console.WriteLine("Could not locate server");
+                    return null;
+                }
+
+                d2.CreateObject(p);
+            }
 
             return p;
         }
 
-        PadInt AccessPadInt (int uid)
+        public PadInt AccessPadInt(int uid)
         {
             String[] URLs = master.GetServerURL(uid);
+            PadInt p = null;
 
-            // Ir buscar o gajo
+            if (URLs == null) return null;
 
-            return new PadInt(uid);
+            iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
+
+            if (d1 == null)
+            {
+                if (URLs[0] != URLs[1])
+                {
+                    iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
+                    if (d2 == null)
+                    {
+                        System.Console.WriteLine("Could not locate server");
+                        return null;
+                    }
+
+                    if ((p = d2.GetObject(uid)) == null)
+                    {
+                        System.Console.WriteLine("Object does not exists.");
+                        return null;
+                    }
+                }
+                else
+                {
+                    System.Console.WriteLine("Could not locate server");
+                    return null;
+                }
+            }
+
+            if ((p = d1.GetObject(uid)) == null)
+            {
+                System.Console.WriteLine("Object does not exists.");
+                return null;
+            }
+
+            return p;
         }
     }
 }
