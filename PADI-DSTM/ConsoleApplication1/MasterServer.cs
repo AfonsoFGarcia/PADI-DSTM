@@ -29,6 +29,7 @@ namespace PADI_DSTM
     class Master : MarshalByRefObject, iMaster
     {
         int nextPadInt;
+        int uniqueId;
         int numServers;
         ServerList servers;
         ServerList lastServer;
@@ -38,6 +39,7 @@ namespace PADI_DSTM
         {
             nextPadInt = 0;
             numServers = 0;
+            uniqueId = 0;
             servers = null;
             lastServer = null;
             padInts = new Hashtable();
@@ -115,6 +117,11 @@ namespace PADI_DSTM
             } while (p.id != lastServer.id);
 
             return true;
+        }
+
+        public int GetUniqueTransactionId()
+        {
+            return uniqueId++;
         }
     }
 

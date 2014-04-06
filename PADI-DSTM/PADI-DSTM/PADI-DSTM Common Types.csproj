@@ -45,9 +45,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TxException.cs" />
     <Compile Include="CommonTypes.cs" />
     <Compile Include="iMaster.cs" />
     <Compile Include="iData.cs" />
+    <Compile Include="2PC.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

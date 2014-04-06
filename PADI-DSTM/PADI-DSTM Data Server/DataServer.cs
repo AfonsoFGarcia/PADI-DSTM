@@ -54,7 +54,7 @@ namespace PADI_DSTM
         }
     }
 
-    public class Data : MarshalByRefObject, iData {
+    public class Data : MarshalByRefObject, iData, iCoordinated {
         bool freeze = false;
         bool fail = false;
         Hashtable objects = new Hashtable();
@@ -100,6 +100,21 @@ namespace PADI_DSTM
         {
             System.Console.WriteLine("Failed: " + fail);
             System.Console.WriteLine("Freeze: " + freeze);
+            return true;
+        }
+
+        public bool canCommit(int tid)
+        {
+            return true;
+        }
+
+        public bool doCommit(int tid)
+        {
+            return true;
+        }
+
+        public bool doAbort(int tid)
+        {
             return true;
         }
     }

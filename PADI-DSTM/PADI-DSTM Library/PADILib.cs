@@ -12,6 +12,8 @@ namespace PADI_DSTM
     public class PADILib : iPADILib
     {
         iMaster master;
+        Coordinator c;
+
 
         public bool Init()
         {
@@ -25,16 +27,22 @@ namespace PADI_DSTM
 
         public bool TxBegin()
         {
+            c = new Coordinator();
+            c.CreateTransaction();
             return true;
         }
 
         public bool TxCommit()
         {
+            c.CommitTransaction();
+            c = null;
             return true;
         }
 
         public bool TxAbort()
         {
+            c.AbortTransaction();
+            c = null;
             return true;
         }
 

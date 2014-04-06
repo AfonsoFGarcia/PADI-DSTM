@@ -13,5 +13,6 @@ namespace PADI_DSTM
         String[] RegisterPadInt(int padIntID);
         int GetPadIntID();
         bool Status();
+        int GetUniqueTransactionId();
     }
 }
