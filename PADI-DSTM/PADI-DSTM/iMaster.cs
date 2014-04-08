@@ -8,7 +8,7 @@ namespace PADI_DSTM
 {
     public interface iMaster
     {
-        int RegisterServer(String URL);
+        bool RegisterServer(String URL);
         String[] GetServerURL(int padIntID);
         String[] RegisterPadInt(int padIntID);
         int GetPadIntID();

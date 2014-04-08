@@ -9,15 +9,15 @@ using System.Runtime.Remoting.Channels;
 // PADI-DSTM Common Types
 namespace PADI_DSTM
 {
-    public class PADILib : iPADILib
+    public class PadiDstm
     {
-        iMaster master;
-        Coordinator c;
+        static iMaster master;
+        static Coordinator c;
+        static TcpChannel channel;
 
-
-        public bool Init()
+        static public bool Init()
         {
-            TcpChannel channel = new TcpChannel();
+            channel = new TcpChannel();
             ChannelServices.RegisterChannel(channel, true);
 
             master = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
@@ -25,54 +25,61 @@ namespace PADI_DSTM
             return master != null;
         }
 
-        public bool TxBegin()
+        static public bool TxBegin()
         {
             c = new Coordinator();
             c.CreateTransaction();
+            System.Console.WriteLine("Begin TX");
             return true;
         }
 
-        public bool TxCommit()
+        static public bool TxCommit()
         {
             c.CommitTransaction();
             c = null;
+            System.Console.WriteLine("Commit TX");
             return true;
         }
 
-        public bool TxAbort()
+        static public bool TxAbort()
         {
             c.AbortTransaction();
             c = null;
             return true;
         }
 
-        public bool Status()
+        static public bool Status()
         {
             return master.Status();
         }
 
-        public bool Fail(string URL)
+        static public bool Fail(string URL)
         {
             iData d = (iData)Activator.GetObject(typeof(iData), URL);
             return !(d == null || !d.Fail());
         }
 
-        public bool Freeze(string URL)
+        static public bool Freeze(string URL)
         {
             iData d = (iData)Activator.GetObject(typeof(iData), URL);
             return !(d == null || !d.Freeze());
         }
 
-        public bool Recover(string URL)
+        static public bool Recover(string URL)
         {
             iData d = (iData)Activator.GetObject(typeof(iData), URL);
             return !(d == null || !d.Recover());
         }
 
-        public PadInt CreatePadInt(int uid)
+        static public PadInt CreatePadInt(int uid)
         {
             PadInt p = new PadInt(uid);
             String[] URLs = master.RegisterPadInt(uid);
+
+            if (URLs == null) return null;
+
+            System.Console.WriteLine(URLs[0]);
+            System.Console.WriteLine(URLs[1]);
 
             iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
             
@@ -102,7 +109,7 @@ namespace PADI_DSTM
             return p;
         }
 
-        public PadInt AccessPadInt(int uid)
+        static public PadInt AccessPadInt(int uid)
         {
             String[] URLs = master.GetServerURL(uid);
             PadInt p = null;

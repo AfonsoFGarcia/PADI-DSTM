@@ -19,15 +19,19 @@ namespace PADI_DSTM
             provider.TypeFilterLevel = System.Runtime.Serialization.Formatters.TypeFilterLevel.Full;
             IDictionary props = new Hashtable();
 
-            TcpChannel channel = new TcpChannel();
+            System.Console.Write("Enter port number: ");
+            string port = System.Console.ReadLine();
+            props["port"] = Int32.Parse(port);
+
+            TcpChannel channel = new TcpChannel(props, null, provider);
             ChannelServices.RegisterChannel(channel, true);
 
             iMaster m = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
 
-            int port = 0;
+            bool res = false;
             try
             {
-                port = m.RegisterServer("DataServer");
+                res = m.RegisterServer("tcp://localhost:"+port+"/DataServer");
             }
             catch (SocketException)
             {
@@ -35,17 +39,12 @@ namespace PADI_DSTM
                 return;
             }
 
-            ChannelServices.UnregisterChannel(channel);
-
-            if (port == 0)
+            if (!res)
             {
                 System.Console.WriteLine("Could not register server.");
                 return;
             }
 
-            props["port"] = port;
-            channel = new TcpChannel(props, null, provider);
-            ChannelServices.RegisterChannel(channel, true);
             Data so = new Data();
             RemotingServices.Marshal(so, "DataServer", typeof(Data));
             
@@ -86,6 +85,7 @@ namespace PADI_DSTM
             }
             else
             {
+                System.Console.WriteLine("Created PadInt " + p.GetId());
                 objects.Add(p.GetId(), p);
                 return true;
             }

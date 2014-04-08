@@ -9,15 +9,15 @@ namespace PADI_DSTM
 {
     interface iPADILib
     {
-        bool Init();
-        bool TxBegin();
-        bool TxCommit();
-        bool TxAbort();
-        bool Status();
-        bool Fail(string URL);
-        bool Freeze(string URL);
-        bool Recover(string URL);
-        PadInt CreatePadInt (int uid);
-        PadInt AccessPadInt (int uid);
+        static bool Init();
+        static bool TxBegin();
+        static bool TxCommit();
+        static bool TxAbort();
+        static bool Status();
+        static bool Fail(string URL);
+        static bool Freeze(string URL);
+        static bool Recover(string URL);
+        static PadInt CreatePadInt(int uid);
+        static PadInt AccessPadInt(int uid);
     }
 }

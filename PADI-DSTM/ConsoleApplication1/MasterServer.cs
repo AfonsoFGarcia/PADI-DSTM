@@ -45,9 +45,8 @@ namespace PADI_DSTM
             padInts = new Hashtable();
         }
 
-        public int RegisterServer(String URL)
+        public bool RegisterServer(String URL)
         {
-            int id = 0;
             lock (this)
             {
                 if (servers == null)
@@ -55,7 +54,7 @@ namespace PADI_DSTM
                     servers = new ServerList();
                     lastServer = servers;
                     servers.id = ++numServers;
-                    servers.URL = "tcp://localhost:" + (lastServer.id + 8080) + "/" + URL;
+                    servers.URL = URL;
                     servers.next = servers;
                 }
                 else
@@ -65,13 +64,12 @@ namespace PADI_DSTM
                     lastServer.next = prov;
                     lastServer = prov;
                     prov.id = ++numServers;
-                    prov.URL = "tcp://localhost:" + (lastServer.id + 8080) + "/" + URL;
+                    prov.URL = URL;
                 }
-                id = lastServer.id + 8080;
-                System.Console.WriteLine("Registered server " + lastServer.URL);
+                System.Console.WriteLine("Registered server " + lastServer.URL + " with id " + lastServer.id);
                 Monitor.PulseAll(this);
             }
-            return id;
+            return true;
         }
 
         public String[] GetServerURL(int padIntID)
@@ -81,11 +79,15 @@ namespace PADI_DSTM
 
         public String[] RegisterPadInt(int padIntID)
         {
+            System.Console.WriteLine(numServers);
+            System.Console.WriteLine(padIntID.GetHashCode());
             int serverNum = padIntID.GetHashCode() % numServers + 1;
             ServerList server = GetServer(serverNum);
+            if (server == null) return null;
             String[] URLs = new String[2];
             URLs[0] = server.URL;
             URLs[1] = server.next.URL;
+            if (padInts.ContainsKey(padIntID)) return null;
             padInts.Add(padIntID, URLs);
             return URLs;
         }
@@ -93,11 +95,11 @@ namespace PADI_DSTM
         public ServerList GetServer(int serverNum)
         {
             ServerList s = servers;
-            while (servers.id != serverNum)
+            for (int i = 0; i < numServers; i++)
             {
-                s = servers.next;
+                if (s.id == serverNum) return s;
             }
-            return s;
+            return null;
         }
 
         public int GetPadIntID()
