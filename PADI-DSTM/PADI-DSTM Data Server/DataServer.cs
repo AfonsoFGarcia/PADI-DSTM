@@ -59,7 +59,9 @@ namespace PADI_DSTM
         bool fail = false;
         Hashtable objects = new Hashtable();
         Hashtable log = new Hashtable();
+        Dictionary<int, bool> canCommitState = new Dictionary<int,bool>();
         iMaster master;
+        iCoordinator c;
         int port;
 
         public Data(iMaster m, int p)
@@ -90,6 +92,7 @@ namespace PADI_DSTM
         public bool CreateObject(IntPadInt p, int tid)
         {
             inTransaction(tid);
+            if (!canCommitState[tid]) return false;
             if (objects.ContainsKey(p.GetId()))
             {
                 return false;
@@ -107,16 +110,24 @@ namespace PADI_DSTM
             if (!log.ContainsKey(tid))
             {
                 string URL = master.GetCoordinator(tid);
-                iCoordinator c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
+                c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
                 string dURL = "tcp://localhost:"+port+"/Server";
                 c.JoinTransaction(tid, dURL);
                 log.Add(tid, new Dictionary<int, int>());
+                canCommitState.Add(tid, true);
             }
+        }
+
+        private bool setLock(int l, int uid, int tid) {
+            IntPadInt obj = (IntPadInt)objects[uid];
+            if (obj == null) return true;
+            return obj.setLock(l, tid);
         }
 
         public bool HasObject(int id, int tid)
         {
             inTransaction(tid);
+            if (!canCommitState[tid]) return false;
             return objects.ContainsKey(id);
         }
 
@@ -130,6 +141,12 @@ namespace PADI_DSTM
         public int ReadValue(int tid, int id)
         {
             inTransaction(tid);
+            if (!canCommitState[tid]) return int.MaxValue;
+            if (!setLock((int)IntPadInt.Locks.READ, id, tid))
+            {
+                canCommitState[tid] = false;
+                return int.MaxValue;
+            }
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
             if (!tLog.ContainsKey(id))
             {
@@ -141,13 +158,19 @@ namespace PADI_DSTM
         public void WriteValue(int tid, int id, int value)
         {
             inTransaction(tid);
+            if (!canCommitState[tid]) return;
+            if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))
+            {
+                canCommitState[tid] = false;
+                return;
+            }
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
             tLog.Add(id, value);
         }
 
         public bool canCommit(int tid)
         {
-            return true;
+            return canCommitState[tid];
         }
 
         public bool doCommit(int tid)
@@ -158,13 +181,16 @@ namespace PADI_DSTM
                 if(!objects.ContainsKey(obj.Key)) {
                     objects.Add(obj.Key, new IntPadInt(obj.Key));
                 }
+                setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
                 ((IntPadInt)objects[obj.Key]).Write(obj.Value);
             }
+            c = null;
             return true;
         }
 
         public bool doAbort(int tid)
         {
+            c = null;
             return true;
         }
     }
