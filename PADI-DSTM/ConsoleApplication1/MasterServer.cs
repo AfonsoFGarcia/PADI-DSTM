@@ -34,6 +34,7 @@ namespace PADI_DSTM
         ServerList servers;
         ServerList lastServer;
         Hashtable padInts;
+        Hashtable coordinators;
 
         public Master()
         {
@@ -43,6 +44,7 @@ namespace PADI_DSTM
             servers = null;
             lastServer = null;
             padInts = new Hashtable();
+            coordinators = new Hashtable();
         }
 
         public bool RegisterServer(String URL)
@@ -66,7 +68,6 @@ namespace PADI_DSTM
                     prov.id = ++numServers;
                     prov.URL = URL;
                 }
-                System.Console.WriteLine("Registered server " + lastServer.URL + " with id " + lastServer.id);
                 Monitor.PulseAll(this);
             }
             return true;
@@ -79,9 +80,7 @@ namespace PADI_DSTM
 
         public String[] RegisterPadInt(int padIntID)
         {
-            System.Console.WriteLine(numServers);
-            System.Console.WriteLine(padIntID.GetHashCode());
-            int serverNum = padIntID.GetHashCode() % numServers + 1;
+            int serverNum = padIntID % numServers + 1;
             ServerList server = GetServer(serverNum);
             if (server == null) return null;
             String[] URLs = new String[2];
@@ -98,6 +97,7 @@ namespace PADI_DSTM
             for (int i = 0; i < numServers; i++)
             {
                 if (s.id == serverNum) return s;
+                s = servers.next;
             }
             return null;
         }
@@ -116,7 +116,7 @@ namespace PADI_DSTM
                 iData d = (iData)Activator.GetObject(typeof(iData), p.URL);
                 if(d == null || !d.Status()) return false;
                 p = p.next;
-            } while (p.id != lastServer.id);
+            } while (p.id != servers.id);
 
             return true;
         }
@@ -124,6 +124,23 @@ namespace PADI_DSTM
         public int GetUniqueTransactionId()
         {
             return uniqueId++;
+        }
+
+        public int RegisterCoordinator()
+        {
+            int tid = uniqueId++;
+            int port = 30000+tid;
+            coordinators.Add(tid, "tcp://localhost:"+port+"/Coordinator"+tid);
+            return tid;
+        }
+        public bool UnregisterCoordinator(int tid)
+        {
+            return true;
+        }
+
+        public string GetCoordinator(int tid)
+        {
+            return (string) coordinators[tid];
         }
     }
 

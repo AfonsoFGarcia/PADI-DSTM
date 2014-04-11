@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace PADI_DSTM
             bool res = false;
             try
             {
-                res = m.RegisterServer("tcp://localhost:"+port+"/DataServer");
+                res = m.RegisterServer("tcp://localhost:"+port+"/Server");
             }
             catch (SocketException)
             {
@@ -45,8 +46,8 @@ namespace PADI_DSTM
                 return;
             }
 
-            Data so = new Data();
-            RemotingServices.Marshal(so, "DataServer", typeof(Data));
+            Data so = new Data(m, (int)props["port"]);
+            RemotingServices.Marshal(so, "Server", typeof(Data));
             
             System.Console.WriteLine("<enter> to exit...");
             System.Console.ReadLine();
@@ -57,6 +58,15 @@ namespace PADI_DSTM
         bool freeze = false;
         bool fail = false;
         Hashtable objects = new Hashtable();
+        Hashtable log = new Hashtable();
+        iMaster master;
+        int port;
+
+        public Data(iMaster m, int p)
+        {
+            master = m;
+            port = p;
+        }
 
         public bool Fail()
         {
@@ -77,23 +87,37 @@ namespace PADI_DSTM
             return !(fail || freeze);
         }
 
-        public bool CreateObject(PadInt p)
+        public bool CreateObject(IntPadInt p, int tid)
         {
+            inTransaction(tid);
             if (objects.ContainsKey(p.GetId()))
             {
                 return false;
             }
             else
             {
-                System.Console.WriteLine("Created PadInt " + p.GetId());
-                objects.Add(p.GetId(), p);
+                Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
+                tLog.Add(p.GetId(), p.Read());
                 return true;
             }
         }
 
-        public PadInt GetObject(int id)
+        private void inTransaction(int tid)
         {
-            return (PadInt) objects[id];
+            if (!log.ContainsKey(tid))
+            {
+                string URL = master.GetCoordinator(tid);
+                iCoordinator c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
+                string dURL = "tcp://localhost:"+port+"/Server";
+                c.JoinTransaction(tid, dURL);
+                log.Add(tid, new Dictionary<int, int>());
+            }
+        }
+
+        public bool HasObject(int id, int tid)
+        {
+            inTransaction(tid);
+            return objects.ContainsKey(id);
         }
 
         public bool Status()
@@ -103,6 +127,24 @@ namespace PADI_DSTM
             return true;
         }
 
+        public int ReadValue(int tid, int id)
+        {
+            inTransaction(tid);
+            Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
+            if (!tLog.ContainsKey(id))
+            {
+                tLog.Add(id, ((IntPadInt)objects[id]).Read());
+            }
+            return (int)tLog[id];
+        }
+
+        public void WriteValue(int tid, int id, int value)
+        {
+            inTransaction(tid);
+            Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
+            tLog.Add(id, value);
+        }
+
         public bool canCommit(int tid)
         {
             return true;
@@ -110,6 +152,14 @@ namespace PADI_DSTM
 
         public bool doCommit(int tid)
         {
+            Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
+            foreach (KeyValuePair<int, int> obj in tLog)
+            {
+                if(!objects.ContainsKey(obj.Key)) {
+                    objects.Add(obj.Key, new IntPadInt(obj.Key));
+                }
+                ((IntPadInt)objects[obj.Key]).Write(obj.Value);
+            }
             return true;
         }
 

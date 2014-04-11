@@ -14,6 +14,7 @@ namespace PADI_DSTM
         static iMaster master;
         static Coordinator c;
         static TcpChannel channel;
+        public static int currentTid = -1;
 
         static public bool Init()
         {
@@ -21,15 +22,17 @@ namespace PADI_DSTM
             ChannelServices.RegisterChannel(channel, true);
 
             master = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
-            System.Console.WriteLine("Initialized Lib");
             return master != null;
         }
 
         static public bool TxBegin()
         {
-            c = new Coordinator();
+            c = new Coordinator(master);
+            ChannelServices.UnregisterChannel(channel);
+            channel = new TcpChannel(c.tid + 30000);
+            ChannelServices.RegisterChannel(channel, true);
+            currentTid = c.tid;
             c.CreateTransaction();
-            System.Console.WriteLine("Begin TX");
             return true;
         }
 
@@ -37,7 +40,7 @@ namespace PADI_DSTM
         {
             c.CommitTransaction();
             c = null;
-            System.Console.WriteLine("Commit TX");
+            currentTid = -1;
             return true;
         }
 
@@ -45,6 +48,7 @@ namespace PADI_DSTM
         {
             c.AbortTransaction();
             c = null;
+            currentTid = -1;
             return true;
         }
 
@@ -73,22 +77,21 @@ namespace PADI_DSTM
 
         static public PadInt CreatePadInt(int uid)
         {
-            PadInt p = new PadInt(uid);
+            if (currentTid == -1) throw new TxException("Not in a transaction");
+            IntPadInt p = new IntPadInt(uid);
             String[] URLs = master.RegisterPadInt(uid);
 
             if (URLs == null) return null;
 
-            System.Console.WriteLine(URLs[0]);
-            System.Console.WriteLine(URLs[1]);
-
             iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
+            iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
             
             if (d1 == null) {
                 System.Console.WriteLine("Could not locate server");
                 return null;
             }
 
-            if (!d1.CreateObject(p))
+            if (!d1.CreateObject(p, currentTid))
             {
                 System.Console.WriteLine("Object already exists.");
                 return null;
@@ -96,40 +99,41 @@ namespace PADI_DSTM
 
             if (URLs[0] != URLs[1])
             {
-                iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
                 if (d2 == null)
                 {
                     System.Console.WriteLine("Could not locate server");
                     return null;
                 }
 
-                d2.CreateObject(p);
+                d2.CreateObject(p, currentTid);
             }
 
-            return p;
+            PadInt r = new PadInt(d1, d2, uid);
+
+            return r;
         }
 
         static public PadInt AccessPadInt(int uid)
         {
+            if (currentTid == -1) throw new TxException("Not in a transaction");
             String[] URLs = master.GetServerURL(uid);
-            PadInt p = null;
 
             if (URLs == null) return null;
 
             iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
+            iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
 
             if (d1 == null)
             {
                 if (URLs[0] != URLs[1])
                 {
-                    iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
                     if (d2 == null)
                     {
                         System.Console.WriteLine("Could not locate server");
                         return null;
                     }
 
-                    if ((p = d2.GetObject(uid)) == null)
+                    if (d2.HasObject(uid, currentTid))
                     {
                         System.Console.WriteLine("Object does not exists.");
                         return null;
@@ -142,13 +146,15 @@ namespace PADI_DSTM
                 }
             }
 
-            if ((p = d1.GetObject(uid)) == null)
+            if (!d1.HasObject(uid, currentTid))
             {
                 System.Console.WriteLine("Object does not exists.");
                 return null;
             }
 
-            return p;
+            PadInt r = new PadInt(d1, d2, uid);
+
+            return r;
         }
     }
 }

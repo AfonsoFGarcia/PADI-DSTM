@@ -4,23 +4,31 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Runtime.Remoting;
 namespace PADI_DSTM
 {
-    public class Coordinator
+    public class Coordinator : MarshalByRefObject, iCoordinator
     {
         public int tid;
         public ArrayList transactionMembers;
+        public iMaster master;
+        public ObjRef thisMarshal;
+
+        public Coordinator(iMaster m)
+        {
+            master = m;
+            tid = master.RegisterCoordinator();
+        }
 
         public int CreateTransaction()
         {
+            string name = "Coordinator" + tid;
+            thisMarshal = RemotingServices.Marshal(this, name, typeof(Coordinator));
             transactionMembers = new ArrayList();
-            iMaster m = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
-            if (m == null) throw new TxException("Could not get a transaction id");
-            return tid = m.GetUniqueTransactionId();
+            return tid;
         }
         public void CommitTransaction()
         {
-            System.Console.WriteLine("For 1 begin");
             iCoordinated member;
             for (int i = 0; i < transactionMembers.Count; i++)
             {
@@ -32,13 +40,13 @@ namespace PADI_DSTM
                 }
 
             }
-            System.Console.WriteLine("For 2 begin");
             for (int i = 0; i < transactionMembers.Count; i++)
             {
                 member = (iCoordinated)transactionMembers[i];
                 member.doCommit(tid);
             }
-            System.Console.WriteLine("End");
+            master.UnregisterCoordinator(tid);
+            RemotingServices.Unmarshal(thisMarshal);
         }
         public void AbortTransaction()
         {
@@ -48,6 +56,8 @@ namespace PADI_DSTM
                 member = (iCoordinated)transactionMembers[i];
                 member.doAbort(tid);
             }
+            master.UnregisterCoordinator(tid);
+            RemotingServices.Unmarshal(thisMarshal);
         }
         public void JoinTransaction(int tid, string url)
         {

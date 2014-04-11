@@ -14,5 +14,8 @@ namespace PADI_DSTM
         int GetPadIntID();
         bool Status();
         int GetUniqueTransactionId();
+        int RegisterCoordinator();
+        bool UnregisterCoordinator(int tid);
+        string GetCoordinator(int tid);
     }
 }

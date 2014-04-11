@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="iCoordinator.cs" />
     <Compile Include="TxException.cs" />
     <Compile Include="CommonTypes.cs" />
     <Compile Include="iMaster.cs" />

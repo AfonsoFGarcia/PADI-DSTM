@@ -25,6 +25,9 @@ namespace ConsoleApplication2
             pi_b = PadiDstm.AccessPadInt(1);
             pi_a.Write(36);
             pi_b.Write(37);
+            res = PadiDstm.TxCommit();
+
+            res = PadiDstm.TxBegin();
             Console.WriteLine("a = " + pi_a.Read());
             Console.WriteLine("b = " + pi_b.Read());
             PadiDstm.Status();

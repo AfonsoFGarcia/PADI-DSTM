@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 namespace PADI_DSTM
 {
     [Serializable]
-    public class PadInt
+    public class IntPadInt
     {
         int id;
         int value;
 
-        public PadInt(int i)
+        public IntPadInt(int i)
         {
             id = i;
         }
