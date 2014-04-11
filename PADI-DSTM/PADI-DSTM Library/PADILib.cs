@@ -15,6 +15,7 @@ namespace PADI_DSTM
         static Coordinator c;
         static TcpChannel channel;
         public static int currentTid = -1;
+        static Dictionary<string, iData> dataServers = new Dictionary<string, iData>();
 
         static public bool Init()
         {
@@ -57,21 +58,35 @@ namespace PADI_DSTM
             return master.Status();
         }
 
+        private static iData getServer(string URL)
+        {
+            if (dataServers.ContainsKey(URL))
+            {
+                return dataServers[URL];
+            }
+            else
+            {
+                iData d = (iData)Activator.GetObject(typeof(iData), URL);
+                dataServers.Add(URL, d);
+                return d;
+            }
+        }
+
         static public bool Fail(string URL)
         {
-            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            iData d = getServer(URL);
             return !(d == null || !d.Fail());
         }
 
         static public bool Freeze(string URL)
         {
-            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            iData d = getServer(URL);
             return !(d == null || !d.Freeze());
         }
 
         static public bool Recover(string URL)
         {
-            iData d = (iData)Activator.GetObject(typeof(iData), URL);
+            iData d = getServer(URL);
             return !(d == null || !d.Recover());
         }
 
@@ -83,8 +98,8 @@ namespace PADI_DSTM
 
             if (URLs == null) return null;
 
-            iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
-            iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
+            iData d1 = getServer(URLs[0]);
+            iData d2 = getServer(URLs[1]);
             
             if (d1 == null) {
                 System.Console.WriteLine("Could not locate server");
@@ -120,8 +135,8 @@ namespace PADI_DSTM
 
             if (URLs == null) return null;
 
-            iData d1 = (iData)Activator.GetObject(typeof(iData), URLs[0]);
-            iData d2 = (iData)Activator.GetObject(typeof(iData), URLs[1]);
+            iData d1 = getServer(URLs[0]);
+            iData d2 = getServer(URLs[1]);
 
             if (d1 == null)
             {

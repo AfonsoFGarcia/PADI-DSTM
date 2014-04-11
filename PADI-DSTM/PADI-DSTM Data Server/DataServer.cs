@@ -185,12 +185,14 @@ namespace PADI_DSTM
                 ((IntPadInt)objects[obj.Key]).Write(obj.Value);
             }
             c = null;
+            log.Remove(tid);
             return true;
         }
 
         public bool doAbort(int tid)
         {
             c = null;
+            log.Remove(tid);
             return true;
         }
     }
