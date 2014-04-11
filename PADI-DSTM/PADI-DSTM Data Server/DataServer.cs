@@ -141,7 +141,7 @@ namespace PADI_DSTM
         public int ReadValue(int tid, int id)
         {
             inTransaction(tid);
-            if (!canCommitState[tid]) return int.MaxValue;
+            if (!canCommitState[tid]) return int.MinValue;
             if (!setLock((int)IntPadInt.Locks.READ, id, tid))
             {
                 canCommitState[tid] = false;

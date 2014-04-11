@@ -28,7 +28,7 @@ namespace PADI_DSTM
         public void Write(int value)
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            if (value >= int.MaxValue) { throw new ArgumentOutOfRangeException("value"); }
+            if (value <= int.MinValue) { throw new ArgumentOutOfRangeException("value"); }
             primary.WriteValue(PadiDstm.currentTid, id, value);
         }
     }

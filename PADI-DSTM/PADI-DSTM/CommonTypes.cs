@@ -12,13 +12,15 @@ namespace PADI_DSTM
     {
 
         public enum Locks { FREE, READ, WRITE }
-        Dictionary<int, int> locks = new Dictionary<int, int>();
-        int id;
-        int value;
+        private Dictionary<int, int> locks = new Dictionary<int, int>();
+        private int id;
+        private int value;
+        private Object thisLock;
 
         public IntPadInt(int i)
         {
             id = i;
+            thisLock = new Object();
         }
 
         public int Read()
@@ -39,9 +41,9 @@ namespace PADI_DSTM
         public bool setLock(int t, int tid)
         {
             DateTime begin = DateTime.Now;
-            while ((DateTime.Now - begin).TotalMilliseconds < 1000)
+            while ((DateTime.Now - begin).TotalSeconds < 10)
             {
-                lock (this)
+                lock (thisLock)
                 {
                     if (t == (int)Locks.WRITE)
                     {
