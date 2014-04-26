@@ -49,7 +49,14 @@ namespace PADI_DSTM
                     {
                         if (locks.Count == 0)
                         {
-                            locks.Add(tid, t);
+                            if (locks.ContainsKey(tid))
+                            {
+                                locks[tid] = t;
+                            }
+                            else
+                            {
+                                locks.Add(tid, t);
+                            }
                             return true;
                         }
                         else if (locks.Count == 1)
@@ -58,42 +65,60 @@ namespace PADI_DSTM
                             {
                                 if (val.Key == tid)
                                 {
-                                    locks.Add(tid, t);
+                                    if (locks.ContainsKey(tid))
+                                    {
+                                        locks[tid] = t;
+                                    }
+                                    else
+                                    {
+                                        locks.Add(tid, t);
+                                    }
                                     return true;
                                 }
                             }
                         }
                     }
-
-                    if (t == (int)Locks.READ)
+                    else if (t == (int)Locks.READ)
                     {
                         if (locks.Count == 1)
                         {
                             foreach (KeyValuePair<int, int> val in locks)
                             {
-                                if (val.Value == (int)Locks.READ)
+                                if (val.Key == tid)
                                 {
-                                    locks.Add(tid, t);
                                     return true;
                                 }
-                                else if (val.Key == tid)
+                                else if (val.Value == (int)Locks.READ)
                                 {
+                                    if (locks.ContainsKey(tid))
+                                    {
+                                        locks[tid] = t;
+                                    }
+                                    else
+                                    {
+                                        locks.Add(tid, t);
+                                    }
                                     return true;
                                 }
                             }
                         }
                         else
                         {
-                            locks.Add(tid, t);
+                            if (locks.ContainsKey(tid))
+                            {
+                                locks[tid] = t;
+                            }
+                            else
+                            {
+                                locks.Add(tid, t);
+                            }
                         }
                     }
-
-                    if (t == (int)Locks.FREE)
+                    else if (t == (int)Locks.FREE)
                     {
                         locks.Remove(tid);
                         return true;
                     }
-                    return true;
                 }
             }
             return false;

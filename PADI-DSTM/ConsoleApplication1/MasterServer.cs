@@ -75,7 +75,7 @@ namespace PADI_DSTM
 
         public String[] GetServerURL(int padIntID)
         {
-            return (String[]) padInts[padIntID];
+            return (String[])padInts[padIntID];
         }
 
         public String[] RegisterPadInt(int padIntID)
@@ -114,7 +114,7 @@ namespace PADI_DSTM
             do
             {
                 iData d = (iData)Activator.GetObject(typeof(iData), p.URL);
-                if(d == null || !d.Status()) return false;
+                if (d == null || !d.Status()) return false;
                 p = p.next;
             } while (p.id != servers.id);
 
@@ -129,8 +129,8 @@ namespace PADI_DSTM
         public int RegisterCoordinator()
         {
             int tid = uniqueId++;
-            int port = 30000+tid;
-            coordinators.Add(tid, "tcp://localhost:"+port+"/Coordinator"+tid);
+            int port = 30000 + tid;
+            coordinators.Add(tid, "tcp://localhost:" + port + "/Coordinator" + tid);
             return tid;
         }
         public bool UnregisterCoordinator(int tid)
@@ -140,7 +140,7 @@ namespace PADI_DSTM
 
         public string GetCoordinator(int tid)
         {
-            return (string) coordinators[tid];
+            return (string)coordinators[tid];
         }
     }
 

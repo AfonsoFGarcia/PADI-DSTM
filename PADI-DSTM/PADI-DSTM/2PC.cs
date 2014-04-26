@@ -61,7 +61,7 @@ namespace PADI_DSTM
         }
         public void JoinTransaction(int tid, string url)
         {
-            if(tid != this.tid) throw new TxException("Incorrect transaction id");
+            if (tid != this.tid) throw new TxException("Incorrect transaction id");
             iCoordinated member = (iCoordinated)Activator.GetObject(typeof(iCoordinated), url);
             transactionMembers.Add(member);
         }

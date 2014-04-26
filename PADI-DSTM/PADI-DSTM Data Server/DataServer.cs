@@ -32,7 +32,7 @@ namespace PADI_DSTM
             bool res = false;
             try
             {
-                res = m.RegisterServer("tcp://localhost:"+port+"/Server");
+                res = m.RegisterServer("tcp://localhost:" + port + "/Server");
             }
             catch (SocketException)
             {
@@ -48,18 +48,19 @@ namespace PADI_DSTM
 
             Data so = new Data(m, (int)props["port"]);
             RemotingServices.Marshal(so, "Server", typeof(Data));
-            
+
             System.Console.WriteLine("<enter> to exit...");
             System.Console.ReadLine();
         }
     }
 
-    public class Data : MarshalByRefObject, iData, iCoordinated {
+    public class Data : MarshalByRefObject, iData, iCoordinated
+    {
         bool freeze = false;
         bool fail = false;
         Hashtable objects = new Hashtable();
         Hashtable log = new Hashtable();
-        Dictionary<int, bool> canCommitState = new Dictionary<int,bool>();
+        Dictionary<int, bool> canCommitState = new Dictionary<int, bool>();
         iMaster master;
         iCoordinator c;
         int port;
@@ -111,14 +112,15 @@ namespace PADI_DSTM
             {
                 string URL = master.GetCoordinator(tid);
                 c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
-                string dURL = "tcp://localhost:"+port+"/Server";
+                string dURL = "tcp://localhost:" + port + "/Server";
                 c.JoinTransaction(tid, dURL);
                 log.Add(tid, new Dictionary<int, int>());
                 canCommitState.Add(tid, true);
             }
         }
 
-        private bool setLock(int l, int uid, int tid) {
+        private bool setLock(int l, int uid, int tid)
+        {
             IntPadInt obj = (IntPadInt)objects[uid];
             if (obj == null) return true;
             return obj.setLock(l, tid);
@@ -165,7 +167,14 @@ namespace PADI_DSTM
                 return;
             }
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
-            tLog.Add(id, value);
+            if (tLog.ContainsKey(id))
+            {
+                tLog[id] = value;
+            }
+            else
+            {
+                tLog.Add(id, value);
+            }
         }
 
         public bool canCommit(int tid)
@@ -178,7 +187,8 @@ namespace PADI_DSTM
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
             foreach (KeyValuePair<int, int> obj in tLog)
             {
-                if(!objects.ContainsKey(obj.Key)) {
+                if (!objects.ContainsKey(obj.Key))
+                {
                     objects.Add(obj.Key, new IntPadInt(obj.Key));
                 }
                 setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
@@ -191,6 +201,11 @@ namespace PADI_DSTM
 
         public bool doAbort(int tid)
         {
+            Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
+            foreach (KeyValuePair<int, int> obj in tLog)
+            {
+                setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
+            }
             c = null;
             log.Remove(tid);
             return true;

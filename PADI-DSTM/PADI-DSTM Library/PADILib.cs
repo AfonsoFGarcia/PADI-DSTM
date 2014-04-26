@@ -39,18 +39,38 @@ namespace PADI_DSTM
 
         static public bool TxCommit()
         {
-            c.CommitTransaction();
-            c = null;
-            currentTid = -1;
-            return true;
+            try
+            {
+                c.CommitTransaction();
+                return true;
+            }
+            catch (TxException e)
+            {
+                return false;
+            }
+            finally
+            {
+                c = null;
+                currentTid = -1;
+            }
         }
 
         static public bool TxAbort()
         {
-            c.AbortTransaction();
-            c = null;
-            currentTid = -1;
-            return true;
+            try
+            {
+                c.AbortTransaction();
+                return true;
+            }
+            catch (TxException e)
+            {
+                return false;
+            }
+            finally
+            {
+                c = null;
+                currentTid = -1;
+            }
         }
 
         static public bool Status()
@@ -100,8 +120,9 @@ namespace PADI_DSTM
 
             iData d1 = getServer(URLs[0]);
             iData d2 = getServer(URLs[1]);
-            
-            if (d1 == null) {
+
+            if (d1 == null)
+            {
                 System.Console.WriteLine("Could not locate server");
                 return null;
             }
