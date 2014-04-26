@@ -11,24 +11,33 @@ namespace PADI_DSTM
         private iData primary;
         private iData backup;
         private int id;
+        private int value;
 
         public PadInt(iData p, iData b, int i)
         {
             backup = b;
             primary = p;
             id = i;
+            value = primary.ReadValue(PadiDstm.currentTid, id);
+
         }
 
         public int Read()
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            return primary.ReadValue(PadiDstm.currentTid, id);
+            return value;
         }
 
-        public void Write(int value)
+        public void Write(int v)
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            if (value <= int.MinValue) { throw new ArgumentOutOfRangeException("value"); }
+            if (v <= int.MinValue) { throw new ArgumentOutOfRangeException("value"); }
+            value = v;
+        }
+
+        public void Flush()
+        {
+            if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
             primary.WriteValue(PadiDstm.currentTid, id, value);
         }
     }

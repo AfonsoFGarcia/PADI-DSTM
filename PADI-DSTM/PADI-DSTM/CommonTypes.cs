@@ -61,46 +61,32 @@ namespace PADI_DSTM
                         }
                         else if (locks.Count == 1)
                         {
-                            foreach (KeyValuePair<int, int> val in locks)
-                            {
-                                if (val.Key == tid)
-                                {
-                                    if (locks.ContainsKey(tid))
-                                    {
-                                        locks[tid] = t;
-                                    }
-                                    else
-                                    {
-                                        locks.Add(tid, t);
-                                    }
-                                    return true;
-                                }
-                            }
+                           
+                           if (locks.ContainsKey(tid))
+                           {
+                               locks[tid] = t;
+                               return true;
+                           }          
                         }
+                
                     }
                     else if (t == (int)Locks.READ)
                     {
                         if (locks.Count == 1)
                         {
-                            foreach (KeyValuePair<int, int> val in locks)
+                            if (locks.ContainsKey(tid))
                             {
-                                if (val.Key == tid)
-                                {
-                                    return true;
-                                }
-                                else if (val.Value == (int)Locks.READ)
-                                {
-                                    if (locks.ContainsKey(tid))
-                                    {
-                                        locks[tid] = t;
-                                    }
-                                    else
-                                    {
-                                        locks.Add(tid, t);
-                                    }
-                                    return true;
-                                }
+                                return true;
                             }
+
+                            int value = locks.Values.First();
+
+                            if (value == (int)Locks.READ)
+                            {
+                                locks.Add(tid, t);
+                                return true;
+                            }
+
                         }
                         else
                         {
@@ -112,6 +98,7 @@ namespace PADI_DSTM
                             {
                                 locks.Add(tid, t);
                             }
+                            return true;
                         }
                     }
                     else if (t == (int)Locks.FREE)

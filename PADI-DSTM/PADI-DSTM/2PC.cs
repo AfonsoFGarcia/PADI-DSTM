@@ -12,18 +12,15 @@ namespace PADI_DSTM
         public int tid;
         public ArrayList transactionMembers;
         public iMaster master;
-        public ObjRef thisMarshal;
 
         public Coordinator(iMaster m)
         {
             master = m;
-            tid = master.RegisterCoordinator();
+            tid = master.GetUniqueTransactionId();
         }
 
         public int CreateTransaction()
         {
-            string name = "Coordinator" + tid;
-            thisMarshal = RemotingServices.Marshal(this, name, typeof(Coordinator));
             transactionMembers = new ArrayList();
             return tid;
         }
@@ -45,8 +42,6 @@ namespace PADI_DSTM
                 member = (iCoordinated)transactionMembers[i];
                 member.doCommit(tid);
             }
-            master.UnregisterCoordinator(tid);
-            RemotingServices.Unmarshal(thisMarshal);
         }
         public void AbortTransaction()
         {
@@ -56,13 +51,15 @@ namespace PADI_DSTM
                 member = (iCoordinated)transactionMembers[i];
                 member.doAbort(tid);
             }
-            master.UnregisterCoordinator(tid);
-            RemotingServices.Unmarshal(thisMarshal);
         }
         public void JoinTransaction(int tid, string url)
         {
             if (tid != this.tid) throw new TxException("Incorrect transaction id");
             iCoordinated member = (iCoordinated)Activator.GetObject(typeof(iCoordinated), url);
+            if (transactionMembers.Contains(member))
+            {
+                return;
+            }
             transactionMembers.Add(member);
         }
     }

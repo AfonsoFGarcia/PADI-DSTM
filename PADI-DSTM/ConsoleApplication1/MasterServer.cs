@@ -125,23 +125,6 @@ namespace PADI_DSTM
         {
             return uniqueId++;
         }
-
-        public int RegisterCoordinator()
-        {
-            int tid = uniqueId++;
-            int port = 30000 + tid;
-            coordinators.Add(tid, "tcp://localhost:" + port + "/Coordinator" + tid);
-            return tid;
-        }
-        public bool UnregisterCoordinator(int tid)
-        {
-            return true;
-        }
-
-        public string GetCoordinator(int tid)
-        {
-            return (string)coordinators[tid];
-        }
     }
 
     public class ServerList
