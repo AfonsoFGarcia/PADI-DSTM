@@ -27,7 +27,7 @@ class Cicle
         Console.WriteLine("Finished creating PadInts. Press enter for 300 R/W transaction cycle.");
         Console.WriteLine("####################################################################");
         Console.ReadLine();
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 300; i++)
         {
             res = PadiDstm.TxBegin();
             PadInt pi_d = PadiDstm.AccessPadInt(2);

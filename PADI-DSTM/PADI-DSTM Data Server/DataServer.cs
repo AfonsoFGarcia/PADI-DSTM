@@ -181,7 +181,7 @@ namespace PADI_DSTM
         {
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
 
-            foreach (KeyValuePair<int, int> entry in tLog)
+            foreach (KeyValuePair<int, int> entry in tLog ?? new Dictionary<int, int>())
             {
                 if (!objects.ContainsKey(entry.Key))
                 {
