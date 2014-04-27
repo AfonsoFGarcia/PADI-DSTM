@@ -49,26 +49,17 @@ namespace PADI_DSTM
                     {
                         if (locks.Count == 0)
                         {
-                            if (locks.ContainsKey(tid))
-                            {
-                                locks[tid] = t;
-                            }
-                            else
-                            {
-                                locks.Add(tid, t);
-                            }
+                            locks.Add(tid, t);
                             return true;
                         }
                         else if (locks.Count == 1)
-                        {
-                           
+                        {  
                            if (locks.ContainsKey(tid))
                            {
                                locks[tid] = t;
                                return true;
                            }          
                         }
-                
                     }
                     else if (t == (int)Locks.READ)
                     {
@@ -78,26 +69,19 @@ namespace PADI_DSTM
                             {
                                 return true;
                             }
-
-                            int value = locks.Values.First();
-
-                            if (value == (int)Locks.READ)
+                            if (locks.Values.First() == (int)Locks.READ)
                             {
                                 locks.Add(tid, t);
                                 return true;
                             }
-
+                        }
+                        else if (!locks.ContainsKey(tid))
+                        {
+                            locks.Add(tid, t);
+                            return true;
                         }
                         else
                         {
-                            if (locks.ContainsKey(tid))
-                            {
-                                locks[tid] = t;
-                            }
-                            else
-                            {
-                                locks.Add(tid, t);
-                            }
                             return true;
                         }
                     }
