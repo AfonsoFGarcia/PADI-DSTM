@@ -150,7 +150,7 @@ namespace PADI_DSTM
         {
             inTransaction(tid);
             if (!canCommitState[tid]) return int.MinValue;
-            if (!setLock((int)IntPadInt.Locks.READ, id, tid))
+            if (!setLock((int)IntPadInt.Type.READ, id, tid))
             {
                 canCommitState[tid] = false;
                 return int.MaxValue;
@@ -167,7 +167,7 @@ namespace PADI_DSTM
         {
             inTransaction(tid);
             if (!canCommitState[tid]) return false;
-            if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))
+            if (!setLock((int)IntPadInt.Type.WRITE, id, tid))
             {
                 canCommitState[tid] = false;
                 return false;
@@ -179,7 +179,7 @@ namespace PADI_DSTM
         {
             inTransaction(tid);
             if (!canCommitState[tid]) return;
-            if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))
+            if (!setLock((int)IntPadInt.Type.WRITE, id, tid))
             {
                 canCommitState[tid] = false;
                 return;

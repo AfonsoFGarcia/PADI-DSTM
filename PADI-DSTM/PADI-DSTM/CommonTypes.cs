@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 // PADI-DSTM Common Types
 namespace PADI_DSTM
@@ -11,16 +12,24 @@ namespace PADI_DSTM
     public class IntPadInt
     {
 
-        public enum Locks { FREE, READ, WRITE }
-        private Dictionary<int, int> locks = new Dictionary<int, int>();
+        public enum Locks { FREE, OBW, OBR, OBRAWP, RFW }
+        public enum Type { FREE, READ, WRITE }
+        public Dictionary<int, Type> lockType = new Dictionary<int, Type>();
         private int id;
         private int value;
-        private Object thisLock;
+        int t;
+        int RR = 0;
+        int RW = 0;
+        int WW = 0;
+
+        Object readMonitor = new Object();
+        Object writeMonitor = new Object();
+        Object lockMonitor = new Object();
 
         public IntPadInt(int i)
         {
             id = i;
-            thisLock = new Object();
+            t = (int) Locks.FREE;
         }
 
         public int Read()
@@ -40,59 +49,194 @@ namespace PADI_DSTM
 
         public bool setLock(int t, int tid)
         {
-            DateTime begin = DateTime.Now;
-            while ((DateTime.Now - begin).TotalMilliseconds < 200)
+            if (t == (int)Type.READ)
             {
-                lock (thisLock)
+                if (lockType.ContainsKey(tid) && lockType[tid] != Type.FREE) { 
+                 
+                }
+                else
                 {
-                    if (t == (int)Locks.WRITE)
+                    lockType[tid] = (Type) t;
+                    return waitToRead();
+                }
+            }
+            else if (t == (int)Type.WRITE)
+            {
+                if (lockType.ContainsKey(tid) && lockType[tid] == Type.WRITE)
+                {
+
+                }
+                else if (lockType.ContainsKey(tid) && lockType[tid] == Type.READ)
+                {
+                    doneReading();
+                    lockType[tid] = Type.WRITE;
+                    return waitToWrite();
+                }
+                else
+                {
+                    lockType[tid] = Type.WRITE;
+                    return waitToWrite();
+                }
+            }
+            else
+            {
+                if (lockType.ContainsKey(tid) && lockType[tid] == Type.WRITE)
+                {
+                    lockType[tid] = Type.FREE;
+                    doneWriting();
+                }
+                else if (lockType.ContainsKey(tid) && lockType[tid] == Type.READ)
+                {
+                    lockType[tid] = Type.FREE;
+                    doneReading();
+                }
+            }
+            return true;
+        }
+
+        public bool waitToWrite()
+        {
+            DateTime begin = DateTime.Now;
+            while (true)
+            {
+                lock (lockMonitor)
+                {
+                Begin:
+
+                    if (t == (int)Locks.FREE)
                     {
-                        if (locks.Count == 0)
-                        {
-                            locks.Add(tid, t);
-                            return true;
-                        }
-                        else if (locks.Count == 1)
-                        {  
-                           if (locks.ContainsKey(tid))
-                           {
-                               locks[tid] = t;
-                               return true;
-                           }          
-                        }
-                    }
-                    else if (t == (int)Locks.READ)
-                    {
-                        if (locks.Count == 1)
-                        {
-                            if (locks.ContainsKey(tid))
-                            {
-                                return true;
-                            }
-                            if (locks.Values.First() == (int)Locks.READ)
-                            {
-                                locks.Add(tid, t);
-                                return true;
-                            }
-                        }
-                        else if (!locks.ContainsKey(tid))
-                        {
-                            locks.Add(tid, t);
-                            return true;
-                        }
-                        else
-                        {
-                            return true;
-                        }
-                    }
-                    else if (t == (int)Locks.FREE)
-                    {
-                        locks.Remove(tid);
+                        t = (int)Locks.OBW;
+                        Monitor.PulseAll(lockMonitor);
                         return true;
+                    }
+                    else if (t == (int)Locks.RFW)
+                    {
+                        t = (int)Locks.OBW;
+                        Monitor.PulseAll(lockMonitor);
+                        return true;
+                    }
+                    else if (t == (int)Locks.OBR || t == (int)Locks.OBRAWP)
+                    {
+                        WW++;
+                        lock (writeMonitor)
+                        {
+                            Monitor.Wait(writeMonitor);
+                        }
+                    }
+                    else
+                    {
+                        goto Begin;
                     }
                 }
             }
             return false;
+        }
+
+        public bool waitToRead()
+        {
+            DateTime begin = DateTime.Now;
+            while (true)
+            {
+                lock (lockMonitor)
+                {
+                Begin:
+
+                    if (t == (int)Locks.FREE)
+                    {
+                        t = (int)Locks.OBR;
+                        RR = 1;
+                        Monitor.PulseAll(lockMonitor);
+                        return true;
+                    }
+                    else if (t == (int)Locks.OBR)
+                    {
+                        RR++;
+                        Monitor.PulseAll(lockMonitor);
+                        return true;
+                    }
+                    else if (t == (int)Locks.OBW || t == (int)Locks.RFW || t == (int)Locks.OBRAWP)
+                    {
+                        RW++;
+                        lock (readMonitor)
+                        {
+                            Monitor.Wait(readMonitor);
+                        }
+                    }
+                    else
+                    {
+                        goto Begin;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool doneWriting()
+        {
+            lock (lockMonitor)
+            {
+                    if (WW == 0)
+                    {
+                        t = (int)Locks.FREE;
+                        Monitor.PulseAll(lockMonitor);
+                        return true;
+                    }
+                    else if (WW > 0)
+                    {
+                        t = (int)Locks.RFW;
+                    }
+
+                    while (t == (int)Locks.RFW && WW > 0)
+                    {
+                        lock (writeMonitor)
+                        {
+                            Monitor.Pulse(writeMonitor);
+                            WW--;
+                        }
+                    }
+                    while (t == (int)Locks.FREE || t == (int)Locks.OBR || RW > 0)
+                    {
+                        lock (readMonitor)
+                        {
+                            Monitor.PulseAll(readMonitor);
+                            RW = 0;
+                        }
+                    }
+                    Monitor.PulseAll(lockMonitor);
+                    return true;
+                
+            }
+        }
+
+        public bool doneReading()
+        {
+            lock (lockMonitor)
+            {
+
+                RR--;
+
+                if (RR == 0 && WW == 0)
+                {
+                    t = (int)Locks.FREE;
+                }
+                else if (RR == 0 && WW > 0)
+                {
+                    t = (int)Locks.RFW;
+                }
+                else if (t == (int)Locks.OBR || t == (int)Locks.OBRAWP || t == (int)Locks.FREE)
+                {
+                }
+                else if (t == (int)Locks.RFW || WW > 0)
+                {
+                    lock (writeMonitor)
+                    {
+                        Monitor.Pulse(writeMonitor);
+                        WW--;
+                    }
+                }
+                Monitor.PulseAll(lockMonitor);
+                return true;
+            }
         }
     }
 }
