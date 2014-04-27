@@ -11,12 +11,10 @@ namespace PADI_DSTM
     {
         public int tid;
         public ArrayList transactionMembers;
-        public iMaster master;
 
-        public Coordinator(iMaster m)
+        public Coordinator(int t)
         {
-            master = m;
-            tid = master.GetUniqueTransactionId();
+            tid = t;
         }
 
         public int CreateTransaction()

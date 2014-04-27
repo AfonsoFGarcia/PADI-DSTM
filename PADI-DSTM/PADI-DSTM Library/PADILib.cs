@@ -17,7 +17,20 @@ namespace PADI_DSTM
         static TcpChannel channel;
         public static int currentTid = -1;
         static Dictionary<string, iData> dataServers = new Dictionary<string, iData>();
-        static Stack transactionPadInt = new Stack(); 
+        static Stack transactionPadInt = new Stack();
+        static int clientID;
+        static int transactionID;
+
+        static private int GetNewTransactionID()
+        {
+            int retVal = clientID * 1000 + transactionID++;
+            transactionID = transactionID % 1000;
+            if (transactionID == 0)
+            {
+                clientID = master.GetUniqueTransactionId();
+            }
+            return retVal;
+        }
 
         static public bool Init()
         {
@@ -25,12 +38,14 @@ namespace PADI_DSTM
             ChannelServices.RegisterChannel(channel, true);
 
             master = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
+            clientID = master.GetUniqueTransactionId();
+            transactionID = 0;
             return master != null;
         }
 
         static public bool TxBegin()
         {
-            c = new Coordinator(master);
+            c = new Coordinator(GetNewTransactionID());
             currentTid = c.tid;
             c.CreateTransaction();
             return true;
