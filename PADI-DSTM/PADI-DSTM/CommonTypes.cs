@@ -57,6 +57,7 @@ namespace PADI_DSTM
                 else
                 {
                     lockType[tid] = (Type) t;
+                    System.Console.WriteLine("Calling waitToRead for transaction " + tid);
                     return waitToRead();
                 }
             }
@@ -68,13 +69,16 @@ namespace PADI_DSTM
                 }
                 else if (lockType.ContainsKey(tid) && lockType[tid] == Type.READ)
                 {
+                    System.Console.WriteLine("Calling doneRead for transaction " + tid);
                     doneReading();
                     lockType[tid] = Type.WRITE;
+                    System.Console.WriteLine("Calling waitToWrite for transaction " + tid);
                     return waitToWrite();
                 }
                 else
                 {
                     lockType[tid] = Type.WRITE;
+                    System.Console.WriteLine("Calling waitToWrite for transaction " + tid);
                     return waitToWrite();
                 }
             }
@@ -83,11 +87,13 @@ namespace PADI_DSTM
                 if (lockType.ContainsKey(tid) && lockType[tid] == Type.WRITE)
                 {
                     lockType[tid] = Type.FREE;
+                    System.Console.WriteLine("Calling doneWriting for transaction " + tid);
                     doneWriting();
                 }
                 else if (lockType.ContainsKey(tid) && lockType[tid] == Type.READ)
                 {
                     lockType[tid] = Type.FREE;
+                    System.Console.WriteLine("Calling doneReading for transaction " + tid);
                     doneReading();
                 }
             }
@@ -99,76 +105,70 @@ namespace PADI_DSTM
             DateTime begin = DateTime.Now;
             while (true)
             {
-                lock (lockMonitor)
+                Monitor.Enter(lockMonitor);
+                if (t == (int)Locks.FREE)
                 {
-                Begin:
-
-                    if (t == (int)Locks.FREE)
-                    {
-                        t = (int)Locks.OBW;
-                        Monitor.PulseAll(lockMonitor);
-                        return true;
-                    }
-                    else if (t == (int)Locks.RFW)
-                    {
-                        t = (int)Locks.OBW;
-                        Monitor.PulseAll(lockMonitor);
-                        return true;
-                    }
-                    else if (t == (int)Locks.OBR || t == (int)Locks.OBRAWP)
-                    {
-                        WW++;
-                        lock (writeMonitor)
-                        {
-                            Monitor.Wait(writeMonitor);
-                        }
-                    }
-                    else
-                    {
-                        goto Begin;
-                    }
+                    t = (int)Locks.OBW;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    return true;
+                }
+                else if (t == (int)Locks.RFW)
+                {
+                    t = (int)Locks.OBW;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    return true;
+                }
+                else if (t == (int)Locks.OBR || t == (int)Locks.OBRAWP)
+                {
+                    WW++;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    Monitor.Wait(writeMonitor);
+                }
+                else
+                {
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
                 }
             }
-            return false;
         }
 
         public bool waitToRead()
         {
             DateTime begin = DateTime.Now;
             while (true)
-            {
-                lock (lockMonitor)
+            {        
+                Monitor.Enter(lockMonitor);
+                if (t == (int)Locks.FREE)
                 {
-                Begin:
-
-                    if (t == (int)Locks.FREE)
-                    {
-                        t = (int)Locks.OBR;
-                        RR = 1;
-                        Monitor.PulseAll(lockMonitor);
-                        return true;
-                    }
-                    else if (t == (int)Locks.OBR)
-                    {
-                        RR++;
-                        Monitor.PulseAll(lockMonitor);
-                        return true;
-                    }
-                    else if (t == (int)Locks.OBW || t == (int)Locks.RFW || t == (int)Locks.OBRAWP)
-                    {
-                        RW++;
-                        lock (readMonitor)
-                        {
-                            Monitor.Wait(readMonitor);
-                        }
-                    }
-                    else
-                    {
-                        goto Begin;
-                    }
+                    t = (int)Locks.OBR;
+                    RR = 1;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    return true;
+                }
+                else if (t == (int)Locks.OBR)
+                {
+                    RR++;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    return true;
+                }
+                else if (t == (int)Locks.OBW || t == (int)Locks.RFW || t == (int)Locks.OBRAWP)
+                {
+                    RW++;
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
+                    Monitor.Wait(readMonitor);
+                }
+                else
+                {
+                    Monitor.PulseAll(lockMonitor);
+                    Monitor.Exit(lockMonitor);
                 }
             }
-            return false;
         }
 
         public bool doneWriting()
@@ -188,19 +188,13 @@ namespace PADI_DSTM
 
                     while (t == (int)Locks.RFW && WW > 0)
                     {
-                        lock (writeMonitor)
-                        {
-                            Monitor.Pulse(writeMonitor);
-                            WW--;
-                        }
+                        Monitor.Pulse(writeMonitor);
+                        WW--;
                     }
                     while (t == (int)Locks.FREE || t == (int)Locks.OBR || RW > 0)
                     {
-                        lock (readMonitor)
-                        {
-                            Monitor.PulseAll(readMonitor);
-                            RW = 0;
-                        }
+                        Monitor.PulseAll(readMonitor);
+                        RW = 0;
                     }
                     Monitor.PulseAll(lockMonitor);
                     return true;
@@ -228,11 +222,8 @@ namespace PADI_DSTM
                 }
                 else if (t == (int)Locks.RFW || WW > 0)
                 {
-                    lock (writeMonitor)
-                    {
-                        Monitor.Pulse(writeMonitor);
-                        WW--;
-                    }
+                    Monitor.Pulse(writeMonitor);
+                    WW--;
                 }
                 Monitor.PulseAll(lockMonitor);
                 return true;
