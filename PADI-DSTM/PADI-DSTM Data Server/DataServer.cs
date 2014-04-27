@@ -198,7 +198,7 @@ namespace PADI_DSTM
         public bool doAbort(int tid)
         {
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
-            foreach (KeyValuePair<int, int> obj in tLog)
+            foreach (KeyValuePair<int, int> obj in tLog ?? new Dictionary<int, int>())
             {
                 setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
             }
