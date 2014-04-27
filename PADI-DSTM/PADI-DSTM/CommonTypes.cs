@@ -41,7 +41,7 @@ namespace PADI_DSTM
         public bool setLock(int t, int tid)
         {
             DateTime begin = DateTime.Now;
-            while ((DateTime.Now - begin).TotalSeconds < 10)
+            while ((DateTime.Now - begin).TotalMilliseconds < 200)
             {
                 lock (thisLock)
                 {

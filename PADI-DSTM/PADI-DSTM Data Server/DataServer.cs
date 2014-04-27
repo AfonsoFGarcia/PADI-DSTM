@@ -110,7 +110,7 @@ namespace PADI_DSTM
             if (!log.ContainsKey(tid))
             {
                 log.Add(tid, new Dictionary<int, int>());
-                canCommitState.Add(tid, true);
+                canCommitState[tid] = true;
             }
         }
 
@@ -130,8 +130,19 @@ namespace PADI_DSTM
 
         public bool Status()
         {
+            System.Console.WriteLine("----------STATUS----------");
             System.Console.WriteLine("Failed: " + fail);
             System.Console.WriteLine("Freeze: " + freeze);
+            System.Console.WriteLine();
+
+            foreach (Object obj in objects.Values)
+            {
+                System.Console.Write("PadInt ");
+                System.Console.Write(((IntPadInt)obj).GetId());
+                System.Console.Write(": ");
+                System.Console.WriteLine(((IntPadInt)obj).Read());
+            }
+
             return true;
         }
 
@@ -150,6 +161,18 @@ namespace PADI_DSTM
                 tLog.Add(id, ((IntPadInt)objects[id]).Read());
             }
             return (int)tLog[id];
+        }
+
+        public Boolean GetWriteLock(int tid, int id)
+        {
+            inTransaction(tid);
+            if (!canCommitState[tid]) return false;
+            if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))
+            {
+                canCommitState[tid] = false;
+                return false;
+            }
+            return true;
         }
 
         public void WriteValue(int tid, int id, int value)

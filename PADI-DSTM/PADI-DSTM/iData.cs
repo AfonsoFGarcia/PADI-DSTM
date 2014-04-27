@@ -16,5 +16,6 @@ namespace PADI_DSTM
         bool Status();
         int ReadValue(int tid, int id);
         void WriteValue(int tid, int id, int value);
+        Boolean GetWriteLock(int tid, int id);
     }
 }
