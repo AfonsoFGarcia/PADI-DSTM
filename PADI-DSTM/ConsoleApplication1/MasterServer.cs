@@ -30,6 +30,7 @@ namespace PADI_DSTM
     {
         int nextPadInt;
         int uniqueId;
+        int coordinatorId;
         int numServers;
         ServerList servers;
         ServerList lastServer;
@@ -41,6 +42,7 @@ namespace PADI_DSTM
             nextPadInt = 0;
             numServers = 0;
             uniqueId = 0;
+            coordinatorId = 0;
             servers = null;
             lastServer = null;
             padInts = new Hashtable();
@@ -121,9 +123,29 @@ namespace PADI_DSTM
             return true;
         }
 
-        public int GetUniqueTransactionId()
+        public int GetUniqueTransactionId(int coordinatorID)
         {
-            return uniqueId++;
+            int tid = uniqueId++;
+            coordinators.Add(tid, "tcp://localhost:" + coordinatorID + "/Coordinator");
+            return tid;
+        }
+
+        public int RegisterCoordinator()
+        {
+            int tid = coordinatorId++;
+            int port = 30000 + tid;
+
+            return port;
+        }
+        public bool UnregisterCoordinator(int tid)
+        {
+            coordinators.Remove(tid);
+            return true;
+        }
+
+        public string GetCoordinator(int tid)
+        {
+            return (string)coordinators[tid];
         }
     }
 

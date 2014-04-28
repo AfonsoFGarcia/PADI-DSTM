@@ -11,35 +11,25 @@ namespace PADI_DSTM
         private iData primary;
         private iData backup;
         private int id;
-        private int value;
-        private Boolean writeLock;
 
         public PadInt(iData p, iData b, int i)
         {
             backup = b;
             primary = p;
             id = i;
-            value = primary.ReadValue(PadiDstm.currentTid, id);
-
         }
 
         public int Read()
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            return value;
+            return primary.ReadValue(PadiDstm.currentTid, id);
         }
 
-        public void Write(int v)
+        public void Write(int value)
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            if (!writeLock) { writeLock = primary.GetWriteLock(PadiDstm.currentTid, id); }
-            value = v;
-        }
-
-        public void Flush()
-        {
-            if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            if (writeLock) primary.WriteValue(PadiDstm.currentTid, id, value);
+            if (value <= int.MinValue) { throw new ArgumentOutOfRangeException("value"); }
+            primary.WriteValue(PadiDstm.currentTid, id, value);
         }
     }
 }

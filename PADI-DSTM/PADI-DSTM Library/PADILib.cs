@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting.Channels;
-using System.Collections;
 
 // PADI-DSTM Common Types
 namespace PADI_DSTM
@@ -17,37 +16,20 @@ namespace PADI_DSTM
         static TcpChannel channel;
         public static int currentTid = -1;
         static Dictionary<string, iData> dataServers = new Dictionary<string, iData>();
-        static Stack transactionPadInt = new Stack();
-        static int clientID;
-        static int transactionID;
-
-        static private int GetNewTransactionID()
-        {
-            int retVal = clientID * 1000 + transactionID++;
-            transactionID = transactionID % 1000;
-            if (transactionID == 0)
-            {
-                clientID = master.GetUniqueTransactionId();
-            }
-            return retVal;
-        }
 
         static public bool Init()
         {
             channel = new TcpChannel();
             ChannelServices.RegisterChannel(channel, true);
-
             master = (iMaster)Activator.GetObject(typeof(iMaster), "tcp://localhost:8080/MasterServer");
-            clientID = master.GetUniqueTransactionId();
-            transactionID = 0;
+            c = new Coordinator(master, channel);
             return master != null;
         }
 
         static public bool TxBegin()
         {
-            c = new Coordinator(GetNewTransactionID());
-            currentTid = c.tid;
             c.CreateTransaction();
+            currentTid = c.tid;
             return true;
         }
 
@@ -55,12 +37,6 @@ namespace PADI_DSTM
         {
             try
             {
-                while (transactionPadInt.Count > 0)
-                {
-                    PadInt var = (PadInt) transactionPadInt.Pop();
-                    var.Flush();
-                }
-
                 c.CommitTransaction();
                 return true;
             }
@@ -70,7 +46,6 @@ namespace PADI_DSTM
             }
             finally
             {
-                c = null;
                 currentTid = -1;
             }
         }
@@ -79,10 +54,6 @@ namespace PADI_DSTM
         {
             try
             {
-                while (transactionPadInt.Count > 0)
-                {
-                    transactionPadInt.Pop();
-                }
                 c.AbortTransaction();
                 return true;
             }
@@ -92,7 +63,6 @@ namespace PADI_DSTM
             }
             finally
             {
-                c = null;
                 currentTid = -1;
             }
         }
@@ -157,8 +127,6 @@ namespace PADI_DSTM
                 return null;
             }
 
-            c.JoinTransaction(currentTid, URLs[0]);
-
             if (URLs[0] != URLs[1])
             {
                 if (d2 == null)
@@ -168,12 +136,10 @@ namespace PADI_DSTM
                 }
 
                 d2.CreateObject(p, currentTid);
-                c.JoinTransaction(currentTid, URLs[1]);
             }
 
             PadInt r = new PadInt(d1, d2, uid);
 
-            transactionPadInt.Push(r);
             return r;
         }
 
@@ -202,7 +168,6 @@ namespace PADI_DSTM
                         System.Console.WriteLine("Object does not exists.");
                         return null;
                     }
-                    c.JoinTransaction(currentTid, URLs[1]);
                 }
                 else
                 {
@@ -216,10 +181,9 @@ namespace PADI_DSTM
                 System.Console.WriteLine("Object does not exists.");
                 return null;
             }
-            c.JoinTransaction(currentTid, URLs[0]);
 
             PadInt r = new PadInt(d1, d2, uid);
-            transactionPadInt.Push(r);
+
             return r;
         }
     }

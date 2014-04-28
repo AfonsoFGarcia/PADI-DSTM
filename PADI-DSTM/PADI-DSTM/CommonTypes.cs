@@ -41,7 +41,7 @@ namespace PADI_DSTM
         public bool setLock(int t, int tid)
         {
             DateTime begin = DateTime.Now;
-            while ((DateTime.Now - begin).TotalMilliseconds < 200)
+            while ((DateTime.Now - begin).TotalMilliseconds < new Random().Next(500, 2000))
             {
                 lock (thisLock)
                 {
@@ -53,12 +53,12 @@ namespace PADI_DSTM
                             return true;
                         }
                         else if (locks.Count == 1)
-                        {  
-                           if (locks.ContainsKey(tid))
-                           {
-                               locks[tid] = t;
-                               return true;
-                           }          
+                        {
+                            if (locks.ContainsKey(tid))
+                            {
+                                locks[tid] = t;
+                                return true;
+                            }
                         }
                     }
                     else if (t == (int)Locks.READ)
@@ -92,6 +92,12 @@ namespace PADI_DSTM
                     }
                 }
             }
+
+            lock (thisLock)
+            {
+                locks.Remove(tid);
+            }
+
             return false;
         }
     }

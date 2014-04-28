@@ -61,7 +61,9 @@ namespace PADI_DSTM
         Hashtable objects = new Hashtable();
         Hashtable log = new Hashtable();
         Dictionary<int, bool> canCommitState = new Dictionary<int, bool>();
+        Dictionary<string, iCoordinator> coordinators = new Dictionary<string, iCoordinator>();
         iMaster master;
+        iCoordinator c;
         int port;
 
         public Data(iMaster m, int p)
@@ -109,8 +111,12 @@ namespace PADI_DSTM
         {
             if (!log.ContainsKey(tid))
             {
+                string URL = master.GetCoordinator(tid);
+                c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
+                string dURL = "tcp://localhost:" + port + "/Server";
+                c.JoinTransaction(tid, dURL);
                 log.Add(tid, new Dictionary<int, int>());
-                canCommitState[tid] = true;
+                canCommitState.Add(tid, true);
             }
         }
 
@@ -163,18 +169,6 @@ namespace PADI_DSTM
             return (int)tLog[id];
         }
 
-        public Boolean GetWriteLock(int tid, int id)
-        {
-            inTransaction(tid);
-            if (!canCommitState[tid]) return false;
-            if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))
-            {
-                canCommitState[tid] = false;
-                return false;
-            }
-            return true;
-        }
-
         public void WriteValue(int tid, int id, int value)
         {
             inTransaction(tid);
@@ -203,17 +197,16 @@ namespace PADI_DSTM
         public bool doCommit(int tid)
         {
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
-
-            foreach (KeyValuePair<int, int> entry in tLog ?? new Dictionary<int, int>())
+            foreach (KeyValuePair<int, int> obj in tLog)
             {
-                if (!objects.ContainsKey(entry.Key))
+                if (!objects.ContainsKey(obj.Key))
                 {
-                    objects.Add(entry.Key, new IntPadInt(entry.Key));
+                    objects.Add(obj.Key, new IntPadInt(obj.Key));
                 }
-                setLock((int)IntPadInt.Locks.FREE, entry.Key, tid);
-                ((IntPadInt)objects[entry.Key]).Write(entry.Value);
+                setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
+                ((IntPadInt)objects[obj.Key]).Write(obj.Value);
             }
-
+            c = null;
             log.Remove(tid);
             return true;
         }
@@ -221,10 +214,11 @@ namespace PADI_DSTM
         public bool doAbort(int tid)
         {
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
-            foreach (KeyValuePair<int, int> obj in tLog ?? new Dictionary<int, int>())
+            foreach (KeyValuePair<int, int> obj in tLog)
             {
                 setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
             }
+            c = null;
             log.Remove(tid);
             return true;
         }

@@ -5,20 +5,32 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Runtime.Remoting;
+using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Remoting.Channels;
+
 namespace PADI_DSTM
 {
     public class Coordinator : MarshalByRefObject, iCoordinator
     {
+        public int coordinatorID;
         public int tid;
         public ArrayList transactionMembers;
+        public iMaster master;
 
-        public Coordinator(int t)
+        public Coordinator(iMaster m, TcpChannel channel)
         {
-            tid = t;
+            master = m;
+            coordinatorID = master.RegisterCoordinator();
+            ChannelServices.UnregisterChannel(channel);
+            channel = new TcpChannel(coordinatorID);
+            ChannelServices.RegisterChannel(channel, true);
+            string name = "Coordinator";
+            RemotingServices.Marshal(this, name, typeof(Coordinator));
         }
 
         public int CreateTransaction()
         {
+            tid = master.GetUniqueTransactionId(coordinatorID);
             transactionMembers = new ArrayList();
             return tid;
         }
@@ -40,6 +52,7 @@ namespace PADI_DSTM
                 member = (iCoordinated)transactionMembers[i];
                 member.doCommit(tid);
             }
+            master.UnregisterCoordinator(coordinatorID);
         }
         public void AbortTransaction()
         {
@@ -49,15 +62,12 @@ namespace PADI_DSTM
                 member = (iCoordinated)transactionMembers[i];
                 member.doAbort(tid);
             }
+            master.UnregisterCoordinator(tid);
         }
         public void JoinTransaction(int tid, string url)
         {
             if (tid != this.tid) throw new TxException("Incorrect transaction id");
             iCoordinated member = (iCoordinated)Activator.GetObject(typeof(iCoordinated), url);
-            if (transactionMembers.Contains(member))
-            {
-                return;
-            }
             transactionMembers.Add(member);
         }
     }

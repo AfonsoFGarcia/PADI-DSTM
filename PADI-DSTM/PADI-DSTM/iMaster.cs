@@ -13,6 +13,9 @@ namespace PADI_DSTM
         String[] RegisterPadInt(int padIntID);
         int GetPadIntID();
         bool Status();
-        int GetUniqueTransactionId();
+        int GetUniqueTransactionId(int coordinatorID);
+        int RegisterCoordinator();
+        bool UnregisterCoordinator(int tid);
+        string GetCoordinator(int tid);
     }
 }
