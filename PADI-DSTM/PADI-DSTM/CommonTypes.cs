@@ -93,12 +93,32 @@ namespace PADI_DSTM
                 }
             }
 
-            lock (thisLock)
-            {
-                locks.Remove(tid);
-            }
-
+            printState(t);
             return false;
         }
+
+        void printState(int t)
+        {
+            int rl = 0;
+            int wl = 0;
+            lock (thisLock)
+            {
+                foreach (int l in locks.Values)
+                {
+                    if (l == (int)Locks.READ)
+                    {
+                        rl++;
+                    }
+                    else wl++;
+
+
+                }
+            }
+            System.Console.WriteLine("Tried lock of type " + (t == (int)Locks.READ ? "READ" : "WRITE"));
+            System.Console.WriteLine("Read locks: " + rl);
+            System.Console.WriteLine("Write locks: " + wl);
+        }
+
     }
+
 }
