@@ -16,7 +16,7 @@ namespace PADI_DSTM
         private int id;
         private int value;
         private Object thisLock;
-
+        private Boolean flag;
         public IntPadInt(int i)
         {
             id = i;
@@ -41,7 +41,8 @@ namespace PADI_DSTM
         public bool setLock(int t, int tid)
         {
             DateTime begin = DateTime.Now;
-            while ((DateTime.Now - begin).TotalMilliseconds < new Random().Next(500, 2000))
+            flag = !flag;
+            while ((DateTime.Now - begin).TotalMilliseconds < (flag ? 1000 : 0) + new Random().Next(500, 2000))
             {
                 lock (thisLock)
                 {
