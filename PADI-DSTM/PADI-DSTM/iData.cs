@@ -16,5 +16,7 @@ namespace PADI_DSTM
         bool Status();
         int ReadValue(int tid, int id);
         void WriteValue(int tid, int id, int value);
+        bool alive();
+        void suicide();
     }
 }

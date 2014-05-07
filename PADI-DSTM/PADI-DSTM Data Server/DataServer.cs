@@ -74,12 +74,14 @@ namespace PADI_DSTM
 
         public bool Fail()
         {
+            while (freeze) { }
             fail = true;
             return fail;
         }
 
         public bool Freeze()
         {
+            while (freeze) { }
             freeze = true;
             return freeze;
         }
@@ -87,12 +89,24 @@ namespace PADI_DSTM
         public bool Recover()
         {
             freeze = false;
-            fail = false;
-            return !(fail || freeze);
+            return !freeze;
+        }
+
+        public bool alive()
+        {
+            while (freeze) { }
+            return true;
+        }
+
+        public void suicide()
+        {
+            System.Environment.Exit(-1);
         }
 
         public bool CreateObject(IntPadInt p, int tid)
         {
+            while (freeze) { }
+
             inTransaction(tid);
             if (!canCommitState[tid]) return false;
             if (objects.ContainsKey(p.GetId()))
@@ -129,6 +143,7 @@ namespace PADI_DSTM
 
         public bool HasObject(int id, int tid)
         {
+            while (freeze) { }
             inTransaction(tid);
             if (!canCommitState[tid]) return false;
             return objects.ContainsKey(id);
@@ -136,6 +151,7 @@ namespace PADI_DSTM
 
         public bool Status()
         {
+            while (freeze) { }
             System.Console.WriteLine("----------STATUS----------");
             System.Console.WriteLine("Failed: " + fail);
             System.Console.WriteLine("Freeze: " + freeze);
@@ -154,6 +170,7 @@ namespace PADI_DSTM
 
         public int ReadValue(int tid, int id)
         {
+            while (freeze) { }
             inTransaction(tid);
             if (!canCommitState[tid]) return int.MinValue;
             if (!setLock((int)IntPadInt.Locks.READ, id, tid))
@@ -171,6 +188,7 @@ namespace PADI_DSTM
 
         public void WriteValue(int tid, int id, int value)
         {
+            while (freeze) { }
             inTransaction(tid);
             if (!canCommitState[tid]) return;
             if (!setLock((int)IntPadInt.Locks.WRITE, id, tid))

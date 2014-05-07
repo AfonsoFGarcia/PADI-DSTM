@@ -16,7 +16,13 @@ namespace PADI_DSTM
     {
         static void Main(string[] args)
         {
-            TcpChannel channel = new TcpChannel(8080);
+            BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
+            provider.TypeFilterLevel = System.Runtime.Serialization.Formatters.TypeFilterLevel.Full;
+            IDictionary props = new Hashtable();
+
+            props["port"] = 8080;
+            props["timeout"] = 750;
+            TcpChannel channel = new TcpChannel(props, null, provider);
             ChannelServices.RegisterChannel(channel, true);
 
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(Master), "MasterServer", WellKnownObjectMode.Singleton);
@@ -47,6 +53,45 @@ namespace PADI_DSTM
             lastServer = null;
             padInts = new Hashtable();
             coordinators = new Hashtable();
+
+            ThreadStart ts = new ThreadStart(this.AliveThread);
+            Thread t = new Thread(ts);
+            t.Start();
+        }
+
+        public void AliveThread()
+        {
+           
+         while (true)
+            {
+                Thread.Sleep(30000);
+                ServerList p = servers;
+                if (p == null)
+                {
+                    continue;
+                }
+                do
+                {
+                    iData d = (iData)Activator.GetObject(typeof(iData), p.URL);
+                    try{
+                        d.alive();
+                        p.alive = true;
+                        System.Console.WriteLine("I'm alive " + p.URL);
+                    }
+                    catch (Exception e)
+                    {
+                        if(d != null)
+                            try
+                            {
+                                d.suicide();
+                            }
+                            catch (Exception f) { }
+                        p.alive = false;
+                        System.Console.WriteLine("I'm dead " + p.URL);
+                    }
+                    p = p.next;
+                } while (p.id != servers.id);
+            }
         }
 
         public bool RegisterServer(String URL)
@@ -154,5 +199,6 @@ namespace PADI_DSTM
         public String URL;
         public int id;
         public ServerList next;
+        public bool alive;
     }
 }

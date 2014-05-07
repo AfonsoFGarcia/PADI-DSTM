@@ -22,8 +22,16 @@ namespace PADI_DSTM
             master = m;
             coordinatorID = master.RegisterCoordinator();
             ChannelServices.UnregisterChannel(channel);
-            channel = new TcpChannel(coordinatorID);
+
+            BinaryServerFormatterSinkProvider provider = new BinaryServerFormatterSinkProvider();
+            provider.TypeFilterLevel = System.Runtime.Serialization.Formatters.TypeFilterLevel.Full;
+            IDictionary props = new Hashtable();
+
+            props["port"] = coordinatorID;
+            props["timeout"] = 750;
+            channel = new TcpChannel(props, null, provider);
             ChannelServices.RegisterChannel(channel, true);
+
             string name = "Coordinator";
             RemotingServices.Marshal(this, name, typeof(Coordinator));
         }
@@ -40,7 +48,15 @@ namespace PADI_DSTM
             for (int i = 0; i < transactionMembers.Count; i++)
             {
                 member = (iCoordinated)transactionMembers[i];
-                if (!member.canCommit(tid))
+                try
+                {
+                    if (!member.canCommit(tid))
+                    {
+                        AbortTransaction();
+                        throw new TxException("Transaction aborted");
+                    }
+                }
+                catch (Exception e)
                 {
                     AbortTransaction();
                     throw new TxException("Transaction aborted");
