@@ -103,6 +103,7 @@ namespace PADI_DSTM
                     servers = new ServerList();
                     lastServer = servers;
                     servers.id = ++numServers;
+                    servers.alive = true;
                     servers.URL = URL;
                     servers.next = servers;
                 }
@@ -113,6 +114,7 @@ namespace PADI_DSTM
                     lastServer.next = prov;
                     lastServer = prov;
                     prov.id = ++numServers;
+                    prov.alive = true;
                     prov.URL = URL;
                 }
                 Monitor.PulseAll(this);
@@ -132,7 +134,8 @@ namespace PADI_DSTM
             if (server == null) return null;
             String[] URLs = new String[2];
             URLs[0] = server.URL;
-            URLs[1] = server.next.URL;
+            server = GetNextServer(server);
+            URLs[1] = server.URL;
             if (padInts.ContainsKey(padIntID)) return null;
             padInts.Add(padIntID, URLs);
             return URLs;
@@ -143,10 +146,31 @@ namespace PADI_DSTM
             ServerList s = servers;
             for (int i = 0; i < numServers; i++)
             {
-                if (s.id == serverNum) return s;
+                if (s.id == serverNum)
+                {
+                    if (s.alive == false)
+                        return GetNextServer(s);
+                    else
+                    {
+                        return s;
+                    }
+                }
                 s = servers.next;
             }
             return null;
+        }
+
+        public ServerList GetNextServer(ServerList list)
+        {
+            if (list.next.alive == true)
+            {
+                return list.next;
+            }
+            else
+            {
+                return GetNextServer(list.next);
+            }
+
         }
 
         public int GetPadIntID()

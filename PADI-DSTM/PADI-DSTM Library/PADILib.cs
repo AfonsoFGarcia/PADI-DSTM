@@ -12,7 +12,7 @@ namespace PADI_DSTM
     public class PadiDstm
     {
         static iMaster master;
-        static Coordinator c;
+        public static Coordinator c;
         static TcpChannel channel;
         public static int currentTid = -1;
         static Dictionary<string, iData> dataServers = new Dictionary<string, iData>();
@@ -115,27 +115,32 @@ namespace PADI_DSTM
             iData d1 = getServer(URLs[0]);
             iData d2 = getServer(URLs[1]);
 
-            if (d1 == null)
+
+            try
+            {
+                if (!d1.CreateObject(p, currentTid))
+                {
+                    System.Console.WriteLine("Object already exists.");
+                    return null;
+                }
+            }
+            catch (Exception)
             {
                 System.Console.WriteLine("Could not locate server");
                 return null;
             }
 
-            if (!d1.CreateObject(p, currentTid))
-            {
-                System.Console.WriteLine("Object already exists.");
-                return null;
-            }
-
             if (URLs[0] != URLs[1])
             {
-                if (d2 == null)
+                try
+                {
+                    d2.CreateObject(p, currentTid);
+                }
+                catch (Exception)
                 {
                     System.Console.WriteLine("Could not locate server");
                     return null;
                 }
-
-                d2.CreateObject(p, currentTid);
             }
 
             PadInt r = new PadInt(d1, d2, uid);
@@ -153,32 +158,39 @@ namespace PADI_DSTM
             iData d1 = getServer(URLs[0]);
             iData d2 = getServer(URLs[1]);
 
-            if (d1 == null)
+            try
             {
-                if (URLs[0] != URLs[1])
+                if (!d1.HasObject(uid, currentTid))
                 {
-                    if (d2 == null)
-                    {
-                        System.Console.WriteLine("Could not locate server");
-                        return null;
-                    }
+                    System.Console.WriteLine("Object does not exists.");
+                    return null;
+                }
+            }
+            catch (Exception)
+            {
+                d1 = null;
+            }
 
-                    if (d2.HasObject(uid, currentTid))
+            
+            if (URLs[0] != URLs[1])
+            {
+                try
+                {
+                    if (!d2.HasObject(uid, currentTid))
                     {
                         System.Console.WriteLine("Object does not exists.");
                         return null;
                     }
-                }
-                else
-                {
-                    System.Console.WriteLine("Could not locate server");
-                    return null;
-                }
+                 }
+                 catch (Exception)
+                 {
+                    d2 = null;
+                 }
             }
 
-            if (!d1.HasObject(uid, currentTid))
+            if (d1 == null && d2 == null)
             {
-                System.Console.WriteLine("Object does not exists.");
+                System.Console.WriteLine("Could not locate server");
                 return null;
             }
 

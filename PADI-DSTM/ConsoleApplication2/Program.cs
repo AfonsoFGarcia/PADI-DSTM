@@ -13,9 +13,7 @@ class Cicle
 
         PadiDstm.Init();
 
-        PadiDstm.Freeze("tcp://localhost:2001/Server");
-
-        /*if ((args.Length > 0) && (args[0].Equals("C")))
+        if ((args.Length > 0) && (args[0].Equals("C")))
         {
             res = PadiDstm.TxBegin();
             PadInt pi_a = PadiDstm.CreatePadInt(2);
@@ -67,7 +65,7 @@ class Cicle
         Console.WriteLine("1000000000 = " + j);
         Console.WriteLine("Status post verification transaction. Press enter for exit.");
         Console.WriteLine("####################################################################");
-        PadiDstm.Status();*/
+        PadiDstm.Status();
         Console.ReadLine();
     }
 }

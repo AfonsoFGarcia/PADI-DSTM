@@ -22,13 +22,52 @@ namespace PADI_DSTM
         public int Read()
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            return primary.ReadValue(PadiDstm.currentTid, id);
+            try {
+                return primary.ReadValue(PadiDstm.currentTid, id);
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    return backup.ReadValue(PadiDstm.currentTid, id);
+                }
+                catch (Exception)
+                {
+                    PadiDstm.c.AbortTransaction();
+                    throw new TxException("Could not locate server");
+                }
+            }
+            
         }
 
         public void Write(int value)
         {
             if (PadiDstm.currentTid == -1) throw new TxException("Not in a transaction");
-            primary.WriteValue(PadiDstm.currentTid, id, value);
+
+            try
+            {
+                primary.WriteValue(PadiDstm.currentTid, id, value);
+            }
+            catch (Exception)
+            {
+                primary = null;
+            }
+
+            try
+            {
+                backup.WriteValue(PadiDstm.currentTid, id, value);
+            }
+            catch (Exception)
+            {
+                backup = null;
+            }
+
+            if (primary == null && backup == null)
+            {
+                PadiDstm.c.AbortTransaction();
+                throw new TxException("Could not locate servers");
+            }
+
         }
     }
 }
