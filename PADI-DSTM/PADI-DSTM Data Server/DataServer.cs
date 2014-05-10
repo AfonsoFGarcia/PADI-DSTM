@@ -60,6 +60,7 @@ namespace PADI_DSTM
         bool fail = false;
         Hashtable objects = new Hashtable();
         Hashtable log = new Hashtable();
+        Dictionary<int, String> padIntUrls = new Dictionary<int, String>();
         Dictionary<int, bool> canCommitState = new Dictionary<int, bool>();
         Dictionary<string, iCoordinator> coordinators = new Dictionary<string, iCoordinator>();
         iMaster master;
@@ -81,10 +82,10 @@ namespace PADI_DSTM
 
         public bool Freeze()
         {
-            while (freeze) { }
             freeze = true;
             return freeze;
         }
+
 
         public bool Recover()
         {
@@ -117,6 +118,7 @@ namespace PADI_DSTM
             {
                 Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
                 tLog.Add(p.GetId(), p.Read());
+                padIntUrls.Add(p.GetId(), p.GetOther());
                 return true;
             }
         }
@@ -152,6 +154,7 @@ namespace PADI_DSTM
         public bool Status()
         {
             while (freeze) { }
+           
             System.Console.WriteLine("----------STATUS----------");
             System.Console.WriteLine("Failed: " + fail);
             System.Console.WriteLine("Freeze: " + freeze);
@@ -176,7 +179,7 @@ namespace PADI_DSTM
             if (!setLock((int)IntPadInt.Locks.READ, id, tid))
             {
                 canCommitState[tid] = false;
-                return int.MaxValue;
+                return int.MinValue;
             }
             Dictionary<int, int> tLog = (Dictionary<int, int>)log[tid];
             if (!tLog.ContainsKey(id))
@@ -209,6 +212,7 @@ namespace PADI_DSTM
 
         public bool canCommit(int tid)
         {
+            while (freeze) { }
             return canCommitState[tid];
         }
 
@@ -219,7 +223,7 @@ namespace PADI_DSTM
             {
                 if (!objects.ContainsKey(obj.Key))
                 {
-                    objects.Add(obj.Key, new IntPadInt(obj.Key));
+                    objects.Add(obj.Key, new IntPadInt(obj.Key, padIntUrls[obj.Key]));
                 }
                 setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
                 ((IntPadInt)objects[obj.Key]).Write(obj.Value);

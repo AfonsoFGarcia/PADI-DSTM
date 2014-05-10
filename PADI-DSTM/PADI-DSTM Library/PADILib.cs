@@ -107,8 +107,11 @@ namespace PADI_DSTM
         static public PadInt CreatePadInt(int uid)
         {
             if (currentTid == -1) throw new TxException("Not in a transaction");
-            IntPadInt p = new IntPadInt(uid);
+            
             String[] URLs = master.RegisterPadInt(uid, currentTid);
+
+            IntPadInt p1 = new IntPadInt(uid, URLs[1]);
+            IntPadInt p2 = new IntPadInt(uid, URLs[0]);
 
             if (URLs == null) return null;
 
@@ -118,7 +121,7 @@ namespace PADI_DSTM
 
             try
             {
-                if (!d1.CreateObject(p, currentTid))
+                if (!d1.CreateObject(p1, currentTid))
                 {
                     System.Console.WriteLine("Object already exists.");
                     return null;
@@ -134,7 +137,7 @@ namespace PADI_DSTM
             {
                 try
                 {
-                    d2.CreateObject(p, currentTid);
+                    d2.CreateObject(p2, currentTid);
                 }
                 catch (Exception)
                 {

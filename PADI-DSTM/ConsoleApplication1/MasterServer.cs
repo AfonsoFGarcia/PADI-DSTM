@@ -75,7 +75,7 @@ namespace PADI_DSTM
            
          while (true)
             {
-                Thread.Sleep(30000);
+                Thread.Sleep(90000);
                 ServerList p = servers;
                 if (p == null)
                 {

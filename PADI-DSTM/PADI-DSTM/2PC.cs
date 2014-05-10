@@ -28,7 +28,6 @@ namespace PADI_DSTM
             IDictionary props = new Hashtable();
 
             props["port"] = coordinatorID;
-            props["timeout"] = 4000;
             channel = new TcpChannel(props, null, provider);
             ChannelServices.RegisterChannel(channel, true);
 

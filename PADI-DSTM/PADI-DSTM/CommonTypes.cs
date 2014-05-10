@@ -15,12 +15,19 @@ namespace PADI_DSTM
         private Dictionary<int, int> locks = new Dictionary<int, int>();
         private int id;
         private int value;
+        private String otherServer;
         private Object thisLock;
         private Boolean flag;
-        public IntPadInt(int i)
+        public IntPadInt(int i, String url)
         {
             id = i;
             thisLock = new Object();
+            otherServer = url;
+        }
+
+        public String GetOther()
+        {
+            return otherServer;
         }
 
         public int Read()
