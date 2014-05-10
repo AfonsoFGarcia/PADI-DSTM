@@ -9,8 +9,8 @@ namespace PADI_DSTM
     public interface iMaster
     {
         bool RegisterServer(String URL);
-        String[] GetServerURL(int padIntID);
-        String[] RegisterPadInt(int padIntID);
+        String[] GetServerURL(int padIntID, int tid);
+        String[] RegisterPadInt(int padIntID, int tid);
         int GetPadIntID();
         bool Status();
         int GetUniqueTransactionId(int coordinatorID);

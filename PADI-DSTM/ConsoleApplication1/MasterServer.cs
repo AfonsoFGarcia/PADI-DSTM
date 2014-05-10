@@ -32,7 +32,15 @@ namespace PADI_DSTM
         }
     }
 
-    class Master : MarshalByRefObject, iMaster
+    public class ServerList
+    {
+        public String URL;
+        public int id;
+        public ServerList next;
+        public bool alive;
+    }
+
+    class Master : MarshalByRefObject, iMaster, iCoordinated
     {
         int nextPadInt;
         int uniqueId;
@@ -41,6 +49,8 @@ namespace PADI_DSTM
         ServerList servers;
         ServerList lastServer;
         Hashtable padInts;
+        Dictionary<int, Hashtable> transactions2PadInts;
+
         Hashtable coordinators;
 
         public Master()
@@ -53,6 +63,7 @@ namespace PADI_DSTM
             lastServer = null;
             padInts = new Hashtable();
             coordinators = new Hashtable();
+            transactions2PadInts = new Dictionary<int, Hashtable>();
 
             ThreadStart ts = new ThreadStart(this.AliveThread);
             Thread t = new Thread(ts);
@@ -122,13 +133,23 @@ namespace PADI_DSTM
             return true;
         }
 
-        public String[] GetServerURL(int padIntID)
+        public String[] GetServerURL(int padIntID, int tid)
         {
-            return (String[])padInts[padIntID];
+           if (padInts.ContainsKey(padIntID))
+           {
+                 return (String[])padInts[padIntID];
+           }
+           else if (transactions2PadInts[tid].ContainsKey(padIntID))
+           {
+                return (String[])transactions2PadInts[tid][padIntID];
+           }
+
+           else return null;
         }
 
-        public String[] RegisterPadInt(int padIntID)
+        public String[] RegisterPadInt(int padIntID, int tid)
         {
+            inTransaction(tid);
             int serverNum = padIntID % numServers + 1;
             ServerList server = GetServer(serverNum);
             if (server == null) return null;
@@ -137,8 +158,20 @@ namespace PADI_DSTM
             server = GetNextServer(server);
             URLs[1] = server.URL;
             if (padInts.ContainsKey(padIntID)) return null;
-            padInts.Add(padIntID, URLs);
+            transactions2PadInts[tid].Add(padIntID, URLs);
             return URLs;
+        }
+
+        private void inTransaction(int tid)
+        {
+            if (!transactions2PadInts.ContainsKey(tid))
+            {
+                string URL = GetCoordinator(tid);
+                iCoordinator c = (iCoordinator)Activator.GetObject(typeof(iCoordinator), URL);
+                string dURL = "tcp://localhost:8080/MasterServer";
+                c.JoinTransaction(tid, dURL);
+                transactions2PadInts.Add(tid, new Hashtable());
+            }
         }
 
         public ServerList GetServer(int serverNum)
@@ -216,13 +249,27 @@ namespace PADI_DSTM
         {
             return (string)coordinators[tid];
         }
+
+        public bool canCommit(int tid)
+        {
+            return true;
+        }
+        public bool doCommit(int tid)
+        {
+            foreach (DictionaryEntry pair in transactions2PadInts[tid])
+            {
+                padInts.Add(pair.Key, pair.Value);
+            }
+            transactions2PadInts.Remove(tid);
+            return true;
+        }
+        public bool doAbort(int tid)
+        {
+            transactions2PadInts.Remove(tid);
+            return true;
+        }
+    
     }
 
-    public class ServerList
-    {
-        public String URL;
-        public int id;
-        public ServerList next;
-        public bool alive;
-    }
+    
 }

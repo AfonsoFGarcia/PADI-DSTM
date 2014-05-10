@@ -108,7 +108,7 @@ namespace PADI_DSTM
         {
             if (currentTid == -1) throw new TxException("Not in a transaction");
             IntPadInt p = new IntPadInt(uid);
-            String[] URLs = master.RegisterPadInt(uid);
+            String[] URLs = master.RegisterPadInt(uid, currentTid);
 
             if (URLs == null) return null;
 
@@ -151,7 +151,7 @@ namespace PADI_DSTM
         static public PadInt AccessPadInt(int uid)
         {
             if (currentTid == -1) throw new TxException("Not in a transaction");
-            String[] URLs = master.GetServerURL(uid);
+            String[] URLs = master.GetServerURL(uid, currentTid);
 
             if (URLs == null) return null;
 
