@@ -25,10 +25,13 @@ namespace PADI_DSTM
             TcpChannel channel = new TcpChannel(props, null, provider);
             ChannelServices.RegisterChannel(channel, true);
 
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(Master), "MasterServer", WellKnownObjectMode.Singleton);
+            Master mo = new Master();
+            RemotingServices.Marshal(mo, "MasterServer", typeof(Master));
 
             System.Console.WriteLine("<enter> to exit...");
             System.Console.ReadLine();
+
+            mo.KillImAlive();
         }
     }
 
@@ -37,7 +40,7 @@ namespace PADI_DSTM
         public String URL;
         public int id;
         public ServerList next;
-        public bool alive;
+        public bool alive;      
     }
 
     class Master : MarshalByRefObject, iMaster, iCoordinated
@@ -50,8 +53,13 @@ namespace PADI_DSTM
         ServerList lastServer;
         Hashtable padInts;
         Dictionary<int, Hashtable> transactions2PadInts;
+        Thread t;
 
         Hashtable coordinators;
+
+        public void KillImAlive() {
+            t.Abort();
+        }
 
         public Master()
         {
@@ -66,7 +74,7 @@ namespace PADI_DSTM
             transactions2PadInts = new Dictionary<int, Hashtable>();
 
             ThreadStart ts = new ThreadStart(this.AliveThread);
-            Thread t = new Thread(ts);
+            t = new Thread(ts);
             t.Start();
         }
 
