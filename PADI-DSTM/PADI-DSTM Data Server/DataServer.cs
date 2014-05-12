@@ -225,8 +225,8 @@ namespace PADI_DSTM
                 {
                     objects.Add(obj.Key, new IntPadInt(obj.Key, padIntUrls[obj.Key]));
                 }
-                setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
                 ((IntPadInt)objects[obj.Key]).Write(obj.Value);
+                setLock((int)IntPadInt.Locks.FREE, obj.Key, tid);
             }
             c = null;
             log.Remove(tid);
