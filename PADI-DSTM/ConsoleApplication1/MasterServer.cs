@@ -188,7 +188,7 @@ namespace PADI_DSTM
                         return s;
                     }
                 }
-                s = servers.next;
+                s = s.next;
             }
             return null;
         }
