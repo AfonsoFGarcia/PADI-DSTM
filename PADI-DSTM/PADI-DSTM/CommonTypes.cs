@@ -49,7 +49,8 @@ namespace PADI_DSTM
         {
             DateTime begin = DateTime.Now;
             flag = !flag;
-            while ((DateTime.Now - begin).TotalMilliseconds < (flag ? 1000 : 0) + new Random().Next(500, 2000))
+            int expiresIn = (flag? 1000 : 0) + new Random().Next(500, 2000);
+            while ((DateTime.Now - begin).TotalMilliseconds < expiresIn)
             {
                 lock (thisLock)
                 {
